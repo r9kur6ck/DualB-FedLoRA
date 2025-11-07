@@ -235,7 +235,7 @@ def run_main_training(config, all_datasets):
     
     base_model = SimpleCNN(rank=config['rank'])
     base_model.eval() 
-    for param_group in base_model.parameters(): param_group['params'].requires_grad = False
+    for param in base_model.parameters(): param.requires_grad = False
     
     server = ShapleyComputeServer(base_model, rank=config['rank'], test_loader=test_loader)
 
