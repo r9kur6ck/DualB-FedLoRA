@@ -1,0 +1,1403 @@
+[Main] config.yml から設定をロードしました。
+{
+  "num_clients": 5,
+  "num_rounds": 20,
+  "local_epochs": 2,
+  "non_iid_alpha": 0.5,
+  "rank": 4,
+  "spsa_epsilon": 0.1,
+  "spsa_eta_b": 0.01,
+  "shapley_tmc_iterations": 20,
+  "eval_interval": 5
+}
+
+[Main] Using device: cuda
+
+[Main] 共通データセットを準備します...
+Files already downloaded and verified
+Files already downloaded and verified
+[Data] Non-IIDデータ分割を開始 (Alpha=0.5)...
+[Data] 5 クライアント分のデータローダーを作成完了。
+--- [パート1] Dual-B FedLoRA (SPSA) 学習開始 ---
+Clients: 5, Rounds: 20, Rank: 4
+------------------------------
+[Server] Shapley値計算サーバを初期化しました。
+[Main] 5 クライアントの初期化完了。
+------------------------------
+[Main] グローバルテスト精度を 5 ラウンドごとに計算します。
+
+--- Round 1/20 ---
+  [Client 0] Local Train: Avg Loss = 1.8076
+  [Client 0] Evaluate Reward: R_i = 1.47% (62/4208)
+  [Client 1] Local Train: Avg Loss = 1.6122
+  [Client 1] Evaluate Reward: R_i = 7.83% (1235/15781)
+  [Client 2] Local Train: Avg Loss = 1.8294
+  [Client 2] Evaluate Reward: R_i = 4.76% (499/10477)
+  [Client 3] Local Train: Avg Loss = 1.2731
+  [Client 3] Evaluate Reward: R_i = 9.98% (853/8543)
+  [Client 4] Local Train: Avg Loss = 1.5880
+  [Client 4] Evaluate Reward: R_i = 5.14% (565/10991)
+         [Server] SPSA Update: R+=5.73, R-=5.91, GradFactor=-0.9033
+         [Server] Round 1 Avg Reward (All Clients): 5.84%
+
+--- Round 2/20 ---
+  [Client 0] Local Train: Avg Loss = 1.6164
+  [Client 0] Evaluate Reward: R_i = 2.40% (101/4208)
+  [Client 1] Local Train: Avg Loss = 1.3967
+  [Client 1] Evaluate Reward: R_i = 6.81% (1075/15781)
+  [Client 2] Local Train: Avg Loss = 1.6522
+  [Client 2] Evaluate Reward: R_i = 1.67% (175/10477)
+  [Client 3] Local Train: Avg Loss = 1.0585
+  [Client 3] Evaluate Reward: R_i = 3.97% (339/8543)
+  [Client 4] Local Train: Avg Loss = 1.3831
+  [Client 4] Evaluate Reward: R_i = 8.27% (909/10991)
+         [Server] SPSA Update: R+=5.39, R-=4.11, GradFactor=6.3822
+         [Server] Round 2 Avg Reward (All Clients): 4.62%
+
+--- Round 3/20 ---
+  [Client 0] Local Train: Avg Loss = 1.5480
+  [Client 0] Evaluate Reward: R_i = 21.65% (911/4208)
+  [Client 1] Local Train: Avg Loss = 1.2965
+  [Client 1] Evaluate Reward: R_i = 8.14% (1284/15781)
+  [Client 2] Local Train: Avg Loss = 1.5509
+  [Client 2] Evaluate Reward: R_i = 4.27% (447/10477)
+  [Client 3] Local Train: Avg Loss = 0.9743
+  [Client 3] Evaluate Reward: R_i = 15.39% (1315/8543)
+  [Client 4] Local Train: Avg Loss = 1.2962
+  [Client 4] Evaluate Reward: R_i = 6.95% (764/10991)
+         [Server] SPSA Update: R+=7.54, R-=13.77, GradFactor=-31.1286
+         [Server] Round 3 Avg Reward (All Clients): 11.28%
+
+--- Round 4/20 ---
+  [Client 0] Local Train: Avg Loss = 1.5004
+  [Client 0] Evaluate Reward: R_i = 23.81% (1002/4208)
+  [Client 1] Local Train: Avg Loss = 1.2142
+  [Client 1] Evaluate Reward: R_i = 9.52% (1503/15781)
+  [Client 2] Local Train: Avg Loss = 1.4913
+  [Client 2] Evaluate Reward: R_i = 6.26% (656/10477)
+  [Client 3] Local Train: Avg Loss = 0.9136
+  [Client 3] Evaluate Reward: R_i = 10.69% (913/8543)
+  [Client 4] Local Train: Avg Loss = 1.2398
+  [Client 4] Evaluate Reward: R_i = 7.95% (874/10991)
+         [Server] SPSA Update: R+=7.11, R-=14.67, GradFactor=-37.8384
+         [Server] Round 4 Avg Reward (All Clients): 11.65%
+
+--- Round 5/20 ---
+  [Client 0] Local Train: Avg Loss = 1.4601
+  [Client 0] Evaluate Reward: R_i = 23.76% (1000/4208)
+  [Client 1] Local Train: Avg Loss = 1.1528
+  [Client 1] Evaluate Reward: R_i = 8.78% (1386/15781)
+  [Client 2] Local Train: Avg Loss = 1.4468
+  [Client 2] Evaluate Reward: R_i = 2.13% (223/10477)
+  [Client 3] Local Train: Avg Loss = 0.8680
+  [Client 3] Evaluate Reward: R_i = 15.70% (1341/8543)
+  [Client 4] Local Train: Avg Loss = 1.2001
+  [Client 4] Evaluate Reward: R_i = 4.16% (457/10991)
+         [Server] SPSA Update: R+=12.24, R-=10.02, GradFactor=11.1150
+         [Server] Round 5 Avg Reward (All Clients): 10.91%
+
+[Main] Round 5: グローバルテスト精度を計算中...
+====== [Main] Round 5 Global Test Accuracy: 15.2300% ======
+
+--- Round 6/20 ---
+  [Client 0] Local Train: Avg Loss = 1.4264
+  [Client 0] Evaluate Reward: R_i = 27.21% (1145/4208)
+  [Client 1] Local Train: Avg Loss = 1.1090
+  [Client 1] Evaluate Reward: R_i = 10.30% (1626/15781)
+  [Client 2] Local Train: Avg Loss = 1.4106
+  [Client 2] Evaluate Reward: R_i = 1.08% (113/10477)
+  [Client 3] Local Train: Avg Loss = 0.8355
+  [Client 3] Evaluate Reward: R_i = 13.81% (1180/8543)
+  [Client 4] Local Train: Avg Loss = 1.1661
+  [Client 4] Evaluate Reward: R_i = 3.90% (429/10991)
+         [Server] SPSA Update: R+=7.45, R-=13.81, GradFactor=-31.8004
+         [Server] Round 6 Avg Reward (All Clients): 11.26%
+
+--- Round 7/20 ---
+  [Client 0] Local Train: Avg Loss = 1.3937
+  [Client 0] Evaluate Reward: R_i = 28.66% (1206/4208)
+  [Client 1] Local Train: Avg Loss = 1.0789
+  [Client 1] Evaluate Reward: R_i = 8.85% (1397/15781)
+  [Client 2] Local Train: Avg Loss = 1.3797
+  [Client 2] Evaluate Reward: R_i = 1.78% (186/10477)
+  [Client 3] Local Train: Avg Loss = 0.8072
+  [Client 3] Evaluate Reward: R_i = 10.55% (901/8543)
+  [Client 4] Local Train: Avg Loss = 1.1382
+  [Client 4] Evaluate Reward: R_i = 5.08% (558/10991)
+         [Server] SPSA Update: R+=6.96, R-=13.66, GradFactor=-33.4795
+         [Server] Round 7 Avg Reward (All Clients): 10.98%
+
+--- Round 8/20 ---
+  [Client 0] Local Train: Avg Loss = 1.3640
+  [Client 0] Evaluate Reward: R_i = 26.85% (1130/4208)
+  [Client 1] Local Train: Avg Loss = 1.0542
+  [Client 1] Evaluate Reward: R_i = 13.12% (2070/15781)
+  [Client 2] Local Train: Avg Loss = 1.3527
+  [Client 2] Evaluate Reward: R_i = 4.92% (515/10477)
+  [Client 3] Local Train: Avg Loss = 0.7817
+  [Client 3] Evaluate Reward: R_i = 0.94% (80/8543)
+  [Client 4] Local Train: Avg Loss = 1.1142
+  [Client 4] Evaluate Reward: R_i = 4.86% (534/10991)
+         [Server] SPSA Update: R+=2.93, R-=14.94, GradFactor=-60.0854
+         [Server] Round 8 Avg Reward (All Clients): 10.14%
+
+--- Round 9/20 ---
+  [Client 0] Local Train: Avg Loss = 1.3385
+  [Client 0] Evaluate Reward: R_i = 25.57% (1076/4208)
+  [Client 1] Local Train: Avg Loss = 1.0337
+  [Client 1] Evaluate Reward: R_i = 8.38% (1323/15781)
+  [Client 2] Local Train: Avg Loss = 1.3300
+  [Client 2] Evaluate Reward: R_i = 6.92% (725/10477)
+  [Client 3] Local Train: Avg Loss = 0.7614
+  [Client 3] Evaluate Reward: R_i = 0.99% (85/8543)
+  [Client 4] Local Train: Avg Loss = 1.0912
+  [Client 4] Evaluate Reward: R_i = 12.55% (1379/10991)
+         [Server] SPSA Update: R+=13.28, R-=9.28, GradFactor=19.9965
+         [Server] Round 9 Avg Reward (All Clients): 10.88%
+
+--- Round 10/20 ---
+  [Client 0] Local Train: Avg Loss = 1.3111
+  [Client 0] Evaluate Reward: R_i = 26.00% (1094/4208)
+  [Client 1] Local Train: Avg Loss = 1.0175
+  [Client 1] Evaluate Reward: R_i = 9.99% (1576/15781)
+  [Client 2] Local Train: Avg Loss = 1.3079
+  [Client 2] Evaluate Reward: R_i = 4.48% (469/10477)
+  [Client 3] Local Train: Avg Loss = 0.7420
+  [Client 3] Evaluate Reward: R_i = 0.94% (80/8543)
+  [Client 4] Local Train: Avg Loss = 1.0720
+  [Client 4] Evaluate Reward: R_i = 9.56% (1051/10991)
+         [Server] SPSA Update: R+=17.78, R-=5.13, GradFactor=63.2352
+         [Server] Round 10 Avg Reward (All Clients): 10.19%
+
+[Main] Round 10: グローバルテスト精度を計算中...
+====== [Main] Round 10 Global Test Accuracy: 13.1300% ======
+
+--- Round 11/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2882
+  [Client 0] Evaluate Reward: R_i = 28.56% (1202/4208)
+  [Client 1] Local Train: Avg Loss = 1.0041
+  [Client 1] Evaluate Reward: R_i = 6.53% (1031/15781)
+  [Client 2] Local Train: Avg Loss = 1.2891
+  [Client 2] Evaluate Reward: R_i = 2.20% (230/10477)
+  [Client 3] Local Train: Avg Loss = 0.7230
+  [Client 3] Evaluate Reward: R_i = 4.85% (414/8543)
+  [Client 4] Local Train: Avg Loss = 1.0544
+  [Client 4] Evaluate Reward: R_i = 14.51% (1595/10991)
+         [Server] SPSA Update: R+=17.55, R-=7.18, GradFactor=51.8225
+         [Server] Round 11 Avg Reward (All Clients): 11.33%
+
+--- Round 12/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2654
+  [Client 0] Evaluate Reward: R_i = 26.73% (1125/4208)
+  [Client 1] Local Train: Avg Loss = 0.9886
+  [Client 1] Evaluate Reward: R_i = 7.87% (1242/15781)
+  [Client 2] Local Train: Avg Loss = 1.2720
+  [Client 2] Evaluate Reward: R_i = 18.70% (1959/10477)
+  [Client 3] Local Train: Avg Loss = 0.7099
+  [Client 3] Evaluate Reward: R_i = 4.16% (355/8543)
+  [Client 4] Local Train: Avg Loss = 1.0378
+  [Client 4] Evaluate Reward: R_i = 11.55% (1270/10991)
+         [Server] SPSA Update: R+=7.86, R-=17.77, GradFactor=-49.5626
+         [Server] Round 12 Avg Reward (All Clients): 13.80%
+
+--- Round 13/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2437
+  [Client 0] Evaluate Reward: R_i = 22.24% (936/4208)
+  [Client 1] Local Train: Avg Loss = 0.9809
+  [Client 1] Evaluate Reward: R_i = 6.53% (1031/15781)
+  [Client 2] Local Train: Avg Loss = 1.2566
+  [Client 2] Evaluate Reward: R_i = 5.27% (552/10477)
+  [Client 3] Local Train: Avg Loss = 0.6933
+  [Client 3] Evaluate Reward: R_i = 1.93% (165/8543)
+  [Client 4] Local Train: Avg Loss = 1.0205
+  [Client 4] Evaluate Reward: R_i = 9.41% (1034/10991)
+         [Server] SPSA Update: R+=7.97, R-=9.81, GradFactor=-9.2202
+         [Server] Round 13 Avg Reward (All Clients): 9.08%
+
+--- Round 14/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2209
+  [Client 0] Evaluate Reward: R_i = 23.27% (979/4208)
+  [Client 1] Local Train: Avg Loss = 0.9714
+  [Client 1] Evaluate Reward: R_i = 7.18% (1133/15781)
+  [Client 2] Local Train: Avg Loss = 1.2413
+  [Client 2] Evaluate Reward: R_i = 8.26% (865/10477)
+  [Client 3] Local Train: Avg Loss = 0.6782
+  [Client 3] Evaluate Reward: R_i = 3.03% (259/8543)
+  [Client 4] Local Train: Avg Loss = 1.0077
+  [Client 4] Evaluate Reward: R_i = 8.03% (883/10991)
+         [Server] SPSA Update: R+=15.76, R-=6.08, GradFactor=48.3950
+         [Server] Round 14 Avg Reward (All Clients): 9.95%
+
+--- Round 15/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2029
+  [Client 0] Evaluate Reward: R_i = 25.40% (1069/4208)
+  [Client 1] Local Train: Avg Loss = 0.9594
+  [Client 1] Evaluate Reward: R_i = 7.17% (1131/15781)
+  [Client 2] Local Train: Avg Loss = 1.2247
+  [Client 2] Evaluate Reward: R_i = 8.20% (859/10477)
+  [Client 3] Local Train: Avg Loss = 0.6663
+  [Client 3] Evaluate Reward: R_i = 0.53% (45/8543)
+  [Client 4] Local Train: Avg Loss = 0.9927
+  [Client 4] Evaluate Reward: R_i = 11.60% (1275/10991)
+         [Server] SPSA Update: R+=9.38, R-=11.38, GradFactor=-9.9646
+         [Server] Round 15 Avg Reward (All Clients): 10.58%
+
+[Main] Round 15: グローバルテスト精度を計算中...
+====== [Main] Round 15 Global Test Accuracy: 14.5400% ======
+
+--- Round 16/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1843
+  [Client 0] Evaluate Reward: R_i = 25.57% (1076/4208)
+  [Client 1] Local Train: Avg Loss = 0.9550
+  [Client 1] Evaluate Reward: R_i = 8.00% (1262/15781)
+  [Client 2] Local Train: Avg Loss = 1.2144
+  [Client 2] Evaluate Reward: R_i = 10.31% (1080/10477)
+  [Client 3] Local Train: Avg Loss = 0.6510
+  [Client 3] Evaluate Reward: R_i = 0.63% (54/8543)
+  [Client 4] Local Train: Avg Loss = 0.9805
+  [Client 4] Evaluate Reward: R_i = 13.75% (1511/10991)
+         [Server] SPSA Update: R+=5.47, R-=15.77, GradFactor=-51.5072
+         [Server] Round 16 Avg Reward (All Clients): 11.65%
+
+--- Round 17/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1660
+  [Client 0] Evaluate Reward: R_i = 33.89% (1426/4208)
+  [Client 1] Local Train: Avg Loss = 0.9439
+  [Client 1] Evaluate Reward: R_i = 8.47% (1337/15781)
+  [Client 2] Local Train: Avg Loss = 1.1983
+  [Client 2] Evaluate Reward: R_i = 3.69% (387/10477)
+  [Client 3] Local Train: Avg Loss = 0.6415
+  [Client 3] Evaluate Reward: R_i = 1.77% (151/8543)
+  [Client 4] Local Train: Avg Loss = 0.9690
+  [Client 4] Evaluate Reward: R_i = 13.89% (1527/10991)
+         [Server] SPSA Update: R+=2.73, R-=18.75, GradFactor=-80.1020
+         [Server] Round 17 Avg Reward (All Clients): 12.34%
+
+--- Round 18/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1468
+  [Client 0] Evaluate Reward: R_i = 32.65% (1374/4208)
+  [Client 1] Local Train: Avg Loss = 0.9381
+  [Client 1] Evaluate Reward: R_i = 11.93% (1883/15781)
+  [Client 2] Local Train: Avg Loss = 1.1869
+  [Client 2] Evaluate Reward: R_i = 12.28% (1287/10477)
+  [Client 3] Local Train: Avg Loss = 0.6309
+  [Client 3] Evaluate Reward: R_i = 18.65% (1593/8543)
+  [Client 4] Local Train: Avg Loss = 0.9586
+  [Client 4] Evaluate Reward: R_i = 13.70% (1506/10991)
+         [Server] SPSA Update: R+=22.47, R-=14.76, GradFactor=38.5386
+         [Server] Round 18 Avg Reward (All Clients): 17.84%
+
+--- Round 19/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1316
+  [Client 0] Evaluate Reward: R_i = 31.68% (1333/4208)
+  [Client 1] Local Train: Avg Loss = 0.9293
+  [Client 1] Evaluate Reward: R_i = 15.89% (2508/15781)
+  [Client 2] Local Train: Avg Loss = 1.1748
+  [Client 2] Evaluate Reward: R_i = 17.29% (1811/10477)
+  [Client 3] Local Train: Avg Loss = 0.6204
+  [Client 3] Evaluate Reward: R_i = 9.42% (805/8543)
+  [Client 4] Local Train: Avg Loss = 0.9476
+  [Client 4] Evaluate Reward: R_i = 13.02% (1431/10991)
+         [Server] SPSA Update: R+=12.66, R-=20.66, GradFactor=-40.0164
+         [Server] Round 19 Avg Reward (All Clients): 17.46%
+
+--- Round 20/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1124
+  [Client 0] Evaluate Reward: R_i = 11.86% (499/4208)
+  [Client 1] Local Train: Avg Loss = 0.9224
+  [Client 1] Evaluate Reward: R_i = 5.58% (880/15781)
+  [Client 2] Local Train: Avg Loss = 1.1636
+  [Client 2] Evaluate Reward: R_i = 22.23% (2329/10477)
+  [Client 3] Local Train: Avg Loss = 0.6080
+  [Client 3] Evaluate Reward: R_i = 9.72% (830/8543)
+  [Client 4] Local Train: Avg Loss = 0.9374
+  [Client 4] Evaluate Reward: R_i = 11.97% (1316/10991)
+         [Server] SPSA Update: R+=17.04, R-=9.09, GradFactor=39.7778
+
+[Server] Shapley値の計算を開始...
+           [Shapley] TMC-Shapley (T=20) 開始...
+           [Shapley] V(S=[0]) = 7.5300%
+           [Shapley] V(S=[0, 1]) = 7.1800%
+           [Shapley] V(S=[0, 1, 2]) = 5.2300%
+           [Shapley] V(S=[0, 1, 2, 4]) = 4.3500%
+           [Shapley] V(S=[0, 1, 2, 3, 4]) = 7.5200%
+           [Shapley] V(S=[0, 3]) = 6.4400%
+           [Shapley] V(S=[0, 3, 4]) = 9.4000%
+           [Shapley] V(S=[0, 1, 3, 4]) = 8.3700%
+           [Shapley] V(S=[0, 4]) = 11.3600%
+           [Shapley] V(S=[0, 1, 4]) = 7.1800%
+           [Shapley] V(S=[2]) = 11.2900%
+           [Shapley] V(S=[0, 2]) = 8.2200%
+           [Shapley] V(S=[0, 2, 4]) = 8.9200%
+           [Shapley] V(S=[0, 2, 3, 4]) = 9.6100%
+           [Shapley] V(S=[3]) = 6.3900%
+           [Shapley] V(S=[1, 3]) = 6.5000%
+           [Shapley] V(S=[0, 1, 3]) = 5.9000%
+           [Shapley] V(S=[0, 1, 2, 3]) = 5.5500%
+           [Shapley] V(S=[4]) = 16.8700%
+           [Shapley] V(S=[2, 4]) = 10.0600%
+           [Shapley] V(S=[1, 2, 4]) = 2.3100%
+           [Shapley] V(S=[1, 2, 3, 4]) = 6.2000%
+           [Shapley] V(S=[2, 3]) = 6.8900%
+           [Shapley] V(S=[0, 2, 3]) = 6.5600%
+           [Shapley] V(S=[2, 3, 4]) = 10.1300%
+           [Shapley] V(S=[1]) = 7.0800%
+           [Shapley] V(S=[1, 2]) = 4.4800%
+           [Shapley] V(S=[1, 2, 3]) = 5.2300%
+[Server] Shapley Values (TMC, T=20 iterations):
+         Client 0: phi = 2.7400
+         Client 1: phi = -1.2240
+         Client 2: phi = 2.3270
+         Client 3: phi = 1.1025
+         Client 4: phi = 2.5745
+         [Server] Round 20 Avg Reward (All Clients): 12.27%
+
+[Main] Round 20: グローバルテスト精度を計算中...
+====== [Main] Round 20 Global Test Accuracy: 7.5200% ======
+------------------------------
+--- [パート1] 学習完了 --- (総所要時間: 776.26 秒)
+
+========================================
+--- [パート2] Shapley値 妥当性検証 開始 ---
+========================================
+検証対象のShapley値: Phi = [ 2.74   -1.224   2.327   1.1025  2.5745]
+
+[Validate] 実際の貢献度(Delta)の計算を開始します (N+1回の再学習)...
+
+[Validate] (0/5) Acc_all (全クライアント) の学習...
+  [Client 0] Local Train: Avg Loss = 1.7600
+  [Client 0] Evaluate Reward: R_i = 2.57% (108/4208)
+  [Client 1] Local Train: Avg Loss = 1.5176
+  [Client 1] Evaluate Reward: R_i = 7.76% (1225/15781)
+  [Client 2] Local Train: Avg Loss = 1.7031
+  [Client 2] Evaluate Reward: R_i = 20.61% (2159/10477)
+  [Client 3] Local Train: Avg Loss = 1.2060
+  [Client 3] Evaluate Reward: R_i = 7.06% (603/8543)
+  [Client 4] Local Train: Avg Loss = 1.4881
+  [Client 4] Evaluate Reward: R_i = 5.22% (574/10991)
+  [Client 0] Local Train: Avg Loss = 1.5434
+  [Client 0] Evaluate Reward: R_i = 27.04% (1138/4208)
+  [Client 1] Local Train: Avg Loss = 1.3129
+  [Client 1] Evaluate Reward: R_i = 7.15% (1128/15781)
+  [Client 2] Local Train: Avg Loss = 1.5302
+  [Client 2] Evaluate Reward: R_i = 20.35% (2132/10477)
+  [Client 3] Local Train: Avg Loss = 0.9920
+  [Client 3] Evaluate Reward: R_i = 0.78% (67/8543)
+  [Client 4] Local Train: Avg Loss = 1.3387
+  [Client 4] Evaluate Reward: R_i = 3.51% (386/10991)
+  [Client 0] Local Train: Avg Loss = 1.4733
+  [Client 0] Evaluate Reward: R_i = 27.00% (1136/4208)
+  [Client 1] Local Train: Avg Loss = 1.2539
+  [Client 1] Evaluate Reward: R_i = 7.83% (1236/15781)
+  [Client 2] Local Train: Avg Loss = 1.4823
+  [Client 2] Evaluate Reward: R_i = 20.56% (2154/10477)
+  [Client 3] Local Train: Avg Loss = 0.9215
+  [Client 3] Evaluate Reward: R_i = 0.26% (22/8543)
+  [Client 4] Local Train: Avg Loss = 1.2713
+  [Client 4] Evaluate Reward: R_i = 1.83% (201/10991)
+  [Client 0] Local Train: Avg Loss = 1.4244
+  [Client 0] Evaluate Reward: R_i = 27.04% (1138/4208)
+  [Client 1] Local Train: Avg Loss = 1.2133
+  [Client 1] Evaluate Reward: R_i = 8.71% (1374/15781)
+  [Client 2] Local Train: Avg Loss = 1.4509
+  [Client 2] Evaluate Reward: R_i = 20.59% (2157/10477)
+  [Client 3] Local Train: Avg Loss = 0.8793
+  [Client 3] Evaluate Reward: R_i = 5.50% (470/8543)
+  [Client 4] Local Train: Avg Loss = 1.2262
+  [Client 4] Evaluate Reward: R_i = 3.13% (344/10991)
+  [Client 0] Local Train: Avg Loss = 1.3852
+  [Client 0] Evaluate Reward: R_i = 27.02% (1137/4208)
+  [Client 1] Local Train: Avg Loss = 1.1772
+  [Client 1] Evaluate Reward: R_i = 8.01% (1264/15781)
+  [Client 2] Local Train: Avg Loss = 1.4227
+  [Client 2] Evaluate Reward: R_i = 20.47% (2145/10477)
+  [Client 3] Local Train: Avg Loss = 0.8470
+  [Client 3] Evaluate Reward: R_i = 4.92% (420/8543)
+  [Client 4] Local Train: Avg Loss = 1.1958
+  [Client 4] Evaluate Reward: R_i = 3.50% (385/10991)
+  [Client 0] Local Train: Avg Loss = 1.3564
+  [Client 0] Evaluate Reward: R_i = 27.04% (1138/4208)
+  [Client 1] Local Train: Avg Loss = 1.1498
+  [Client 1] Evaluate Reward: R_i = 8.33% (1315/15781)
+  [Client 2] Local Train: Avg Loss = 1.3971
+  [Client 2] Evaluate Reward: R_i = 20.55% (2153/10477)
+  [Client 3] Local Train: Avg Loss = 0.8209
+  [Client 3] Evaluate Reward: R_i = 4.52% (386/8543)
+  [Client 4] Local Train: Avg Loss = 1.1698
+  [Client 4] Evaluate Reward: R_i = 3.06% (336/10991)
+  [Client 0] Local Train: Avg Loss = 1.3308
+  [Client 0] Evaluate Reward: R_i = 27.02% (1137/4208)
+  [Client 1] Local Train: Avg Loss = 1.1236
+  [Client 1] Evaluate Reward: R_i = 6.06% (956/15781)
+  [Client 2] Local Train: Avg Loss = 1.3746
+  [Client 2] Evaluate Reward: R_i = 21.31% (2233/10477)
+  [Client 3] Local Train: Avg Loss = 0.7970
+  [Client 3] Evaluate Reward: R_i = 5.62% (480/8543)
+  [Client 4] Local Train: Avg Loss = 1.1479
+  [Client 4] Evaluate Reward: R_i = 4.20% (462/10991)
+  [Client 0] Local Train: Avg Loss = 1.3106
+  [Client 0] Evaluate Reward: R_i = 26.97% (1135/4208)
+  [Client 1] Local Train: Avg Loss = 1.0995
+  [Client 1] Evaluate Reward: R_i = 6.46% (1019/15781)
+  [Client 2] Local Train: Avg Loss = 1.3549
+  [Client 2] Evaluate Reward: R_i = 20.98% (2198/10477)
+  [Client 3] Local Train: Avg Loss = 0.7754
+  [Client 3] Evaluate Reward: R_i = 4.89% (418/8543)
+  [Client 4] Local Train: Avg Loss = 1.1276
+  [Client 4] Evaluate Reward: R_i = 2.95% (324/10991)
+  [Client 0] Local Train: Avg Loss = 1.2925
+  [Client 0] Evaluate Reward: R_i = 11.22% (472/4208)
+  [Client 1] Local Train: Avg Loss = 1.0773
+  [Client 1] Evaluate Reward: R_i = 5.19% (819/15781)
+  [Client 2] Local Train: Avg Loss = 1.3351
+  [Client 2] Evaluate Reward: R_i = 14.95% (1566/10477)
+  [Client 3] Local Train: Avg Loss = 0.7569
+  [Client 3] Evaluate Reward: R_i = 5.91% (505/8543)
+  [Client 4] Local Train: Avg Loss = 1.1095
+  [Client 4] Evaluate Reward: R_i = 15.09% (1659/10991)
+  [Client 0] Local Train: Avg Loss = 1.2748
+  [Client 0] Evaluate Reward: R_i = 12.79% (538/4208)
+  [Client 1] Local Train: Avg Loss = 1.0627
+  [Client 1] Evaluate Reward: R_i = 6.97% (1100/15781)
+  [Client 2] Local Train: Avg Loss = 1.3170
+  [Client 2] Evaluate Reward: R_i = 24.29% (2545/10477)
+  [Client 3] Local Train: Avg Loss = 0.7408
+  [Client 3] Evaluate Reward: R_i = 5.10% (436/8543)
+  [Client 4] Local Train: Avg Loss = 1.0942
+  [Client 4] Evaluate Reward: R_i = 11.94% (1312/10991)
+  [Client 0] Local Train: Avg Loss = 1.2544
+  [Client 0] Evaluate Reward: R_i = 13.97% (588/4208)
+  [Client 1] Local Train: Avg Loss = 1.0487
+  [Client 1] Evaluate Reward: R_i = 6.87% (1084/15781)
+  [Client 2] Local Train: Avg Loss = 1.3009
+  [Client 2] Evaluate Reward: R_i = 22.97% (2407/10477)
+  [Client 3] Local Train: Avg Loss = 0.7250
+  [Client 3] Evaluate Reward: R_i = 5.79% (495/8543)
+  [Client 4] Local Train: Avg Loss = 1.0783
+  [Client 4] Evaluate Reward: R_i = 18.13% (1993/10991)
+  [Client 0] Local Train: Avg Loss = 1.2414
+  [Client 0] Evaluate Reward: R_i = 12.88% (542/4208)
+  [Client 1] Local Train: Avg Loss = 1.0371
+  [Client 1] Evaluate Reward: R_i = 9.36% (1477/15781)
+  [Client 2] Local Train: Avg Loss = 1.2852
+  [Client 2] Evaluate Reward: R_i = 19.97% (2092/10477)
+  [Client 3] Local Train: Avg Loss = 0.7096
+  [Client 3] Evaluate Reward: R_i = 5.44% (465/8543)
+  [Client 4] Local Train: Avg Loss = 1.0655
+  [Client 4] Evaluate Reward: R_i = 17.44% (1917/10991)
+  [Client 0] Local Train: Avg Loss = 1.2286
+  [Client 0] Evaluate Reward: R_i = 11.83% (498/4208)
+  [Client 1] Local Train: Avg Loss = 1.0279
+  [Client 1] Evaluate Reward: R_i = 6.53% (1030/15781)
+  [Client 2] Local Train: Avg Loss = 1.2710
+  [Client 2] Evaluate Reward: R_i = 15.88% (1664/10477)
+  [Client 3] Local Train: Avg Loss = 0.6984
+  [Client 3] Evaluate Reward: R_i = 5.50% (470/8543)
+  [Client 4] Local Train: Avg Loss = 1.0498
+  [Client 4] Evaluate Reward: R_i = 11.35% (1248/10991)
+  [Client 0] Local Train: Avg Loss = 1.2119
+  [Client 0] Evaluate Reward: R_i = 12.24% (515/4208)
+  [Client 1] Local Train: Avg Loss = 1.0168
+  [Client 1] Evaluate Reward: R_i = 5.08% (802/15781)
+  [Client 2] Local Train: Avg Loss = 1.2560
+  [Client 2] Evaluate Reward: R_i = 18.09% (1895/10477)
+  [Client 3] Local Train: Avg Loss = 0.6855
+  [Client 3] Evaluate Reward: R_i = 5.93% (507/8543)
+  [Client 4] Local Train: Avg Loss = 1.0401
+  [Client 4] Evaluate Reward: R_i = 16.33% (1795/10991)
+  [Client 0] Local Train: Avg Loss = 1.2010
+  [Client 0] Evaluate Reward: R_i = 11.24% (473/4208)
+  [Client 1] Local Train: Avg Loss = 1.0094
+  [Client 1] Evaluate Reward: R_i = 5.30% (837/15781)
+  [Client 2] Local Train: Avg Loss = 1.2456
+  [Client 2] Evaluate Reward: R_i = 16.38% (1716/10477)
+  [Client 3] Local Train: Avg Loss = 0.6745
+  [Client 3] Evaluate Reward: R_i = 5.42% (463/8543)
+  [Client 4] Local Train: Avg Loss = 1.0262
+  [Client 4] Evaluate Reward: R_i = 15.25% (1676/10991)
+  [Client 0] Local Train: Avg Loss = 1.1893
+  [Client 0] Evaluate Reward: R_i = 11.45% (482/4208)
+  [Client 1] Local Train: Avg Loss = 0.9998
+  [Client 1] Evaluate Reward: R_i = 5.91% (932/15781)
+  [Client 2] Local Train: Avg Loss = 1.2282
+  [Client 2] Evaluate Reward: R_i = 12.76% (1337/10477)
+  [Client 3] Local Train: Avg Loss = 0.6645
+  [Client 3] Evaluate Reward: R_i = 9.74% (832/8543)
+  [Client 4] Local Train: Avg Loss = 1.0141
+  [Client 4] Evaluate Reward: R_i = 17.67% (1942/10991)
+  [Client 0] Local Train: Avg Loss = 1.1740
+  [Client 0] Evaluate Reward: R_i = 11.17% (470/4208)
+  [Client 1] Local Train: Avg Loss = 0.9953
+  [Client 1] Evaluate Reward: R_i = 5.53% (872/15781)
+  [Client 2] Local Train: Avg Loss = 1.2210
+  [Client 2] Evaluate Reward: R_i = 10.73% (1124/10477)
+  [Client 3] Local Train: Avg Loss = 0.6550
+  [Client 3] Evaluate Reward: R_i = 8.21% (701/8543)
+  [Client 4] Local Train: Avg Loss = 0.9995
+  [Client 4] Evaluate Reward: R_i = 20.08% (2207/10991)
+  [Client 0] Local Train: Avg Loss = 1.1613
+  [Client 0] Evaluate Reward: R_i = 11.41% (480/4208)
+  [Client 1] Local Train: Avg Loss = 0.9872
+  [Client 1] Evaluate Reward: R_i = 6.05% (955/15781)
+  [Client 2] Local Train: Avg Loss = 1.2109
+  [Client 2] Evaluate Reward: R_i = 10.55% (1105/10477)
+  [Client 3] Local Train: Avg Loss = 0.6439
+  [Client 3] Evaluate Reward: R_i = 8.62% (736/8543)
+  [Client 4] Local Train: Avg Loss = 0.9935
+  [Client 4] Evaluate Reward: R_i = 19.67% (2162/10991)
+  [Client 0] Local Train: Avg Loss = 1.1501
+  [Client 0] Evaluate Reward: R_i = 11.12% (468/4208)
+  [Client 1] Local Train: Avg Loss = 0.9790
+  [Client 1] Evaluate Reward: R_i = 6.08% (959/15781)
+  [Client 2] Local Train: Avg Loss = 1.1979
+  [Client 2] Evaluate Reward: R_i = 12.57% (1317/10477)
+  [Client 3] Local Train: Avg Loss = 0.6341
+  [Client 3] Evaluate Reward: R_i = 12.84% (1097/8543)
+  [Client 4] Local Train: Avg Loss = 0.9796
+  [Client 4] Evaluate Reward: R_i = 18.16% (1996/10991)
+  [Client 0] Local Train: Avg Loss = 1.1426
+  [Client 0] Evaluate Reward: R_i = 11.05% (465/4208)
+  [Client 1] Local Train: Avg Loss = 0.9740
+  [Client 1] Evaluate Reward: R_i = 5.28% (834/15781)
+  [Client 2] Local Train: Avg Loss = 1.1873
+  [Client 2] Evaluate Reward: R_i = 12.94% (1356/10477)
+  [Client 3] Local Train: Avg Loss = 0.6243
+  [Client 3] Evaluate Reward: R_i = 10.31% (881/8543)
+  [Client 4] Local Train: Avg Loss = 0.9697
+  [Client 4] Evaluate Reward: R_i = 16.88% (1855/10991)
+[Validate] Acc_all = 11.6400%
+
+[Validate] (1/5) Client 0 を除外して再学習...
+  [Client 0] Local Train: Avg Loss = 1.5083
+  [Client 0] Evaluate Reward: R_i = 20.96% (3308/15781)
+  [Client 1] Local Train: Avg Loss = 1.7252
+  [Client 1] Evaluate Reward: R_i = 6.94% (727/10477)
+  [Client 2] Local Train: Avg Loss = 1.2019
+  [Client 2] Evaluate Reward: R_i = 31.91% (2726/8543)
+  [Client 3] Local Train: Avg Loss = 1.5006
+  [Client 3] Evaluate Reward: R_i = 4.79% (526/10991)
+  [Client 0] Local Train: Avg Loss = 1.2910
+  [Client 0] Evaluate Reward: R_i = 6.98% (1102/15781)
+  [Client 1] Local Train: Avg Loss = 1.5480
+  [Client 1] Evaluate Reward: R_i = 8.33% (873/10477)
+  [Client 2] Local Train: Avg Loss = 1.0160
+  [Client 2] Evaluate Reward: R_i = 15.74% (1345/8543)
+  [Client 3] Local Train: Avg Loss = 1.3240
+  [Client 3] Evaluate Reward: R_i = 4.11% (452/10991)
+  [Client 0] Local Train: Avg Loss = 1.2052
+  [Client 0] Evaluate Reward: R_i = 23.12% (3648/15781)
+  [Client 1] Local Train: Avg Loss = 1.4620
+  [Client 1] Evaluate Reward: R_i = 14.72% (1542/10477)
+  [Client 2] Local Train: Avg Loss = 0.9434
+  [Client 2] Evaluate Reward: R_i = 16.46% (1406/8543)
+  [Client 3] Local Train: Avg Loss = 1.2496
+  [Client 3] Evaluate Reward: R_i = 3.58% (393/10991)
+  [Client 0] Local Train: Avg Loss = 1.1553
+  [Client 0] Evaluate Reward: R_i = 22.27% (3514/15781)
+  [Client 1] Local Train: Avg Loss = 1.4065
+  [Client 1] Evaluate Reward: R_i = 12.73% (1334/10477)
+  [Client 2] Local Train: Avg Loss = 0.8940
+  [Client 2] Evaluate Reward: R_i = 11.30% (965/8543)
+  [Client 3] Local Train: Avg Loss = 1.1987
+  [Client 3] Evaluate Reward: R_i = 21.09% (2318/10991)
+  [Client 0] Local Train: Avg Loss = 1.1217
+  [Client 0] Evaluate Reward: R_i = 16.39% (2587/15781)
+  [Client 1] Local Train: Avg Loss = 1.3685
+  [Client 1] Evaluate Reward: R_i = 11.03% (1156/10477)
+  [Client 2] Local Train: Avg Loss = 0.8518
+  [Client 2] Evaluate Reward: R_i = 0.96% (82/8543)
+  [Client 3] Local Train: Avg Loss = 1.1603
+  [Client 3] Evaluate Reward: R_i = 23.12% (2541/10991)
+  [Client 0] Local Train: Avg Loss = 1.0929
+  [Client 0] Evaluate Reward: R_i = 17.69% (2791/15781)
+  [Client 1] Local Train: Avg Loss = 1.3385
+  [Client 1] Evaluate Reward: R_i = 15.86% (1662/10477)
+  [Client 2] Local Train: Avg Loss = 0.8173
+  [Client 2] Evaluate Reward: R_i = 1.45% (124/8543)
+  [Client 3] Local Train: Avg Loss = 1.1282
+  [Client 3] Evaluate Reward: R_i = 13.56% (1490/10991)
+  [Client 0] Local Train: Avg Loss = 1.0717
+  [Client 0] Evaluate Reward: R_i = 22.00% (3472/15781)
+  [Client 1] Local Train: Avg Loss = 1.3112
+  [Client 1] Evaluate Reward: R_i = 7.46% (782/10477)
+  [Client 2] Local Train: Avg Loss = 0.7867
+  [Client 2] Evaluate Reward: R_i = 1.37% (117/8543)
+  [Client 3] Local Train: Avg Loss = 1.1013
+  [Client 3] Evaluate Reward: R_i = 5.51% (606/10991)
+  [Client 0] Local Train: Avg Loss = 1.0511
+  [Client 0] Evaluate Reward: R_i = 22.24% (3509/15781)
+  [Client 1] Local Train: Avg Loss = 1.2876
+  [Client 1] Evaluate Reward: R_i = 15.78% (1653/10477)
+  [Client 2] Local Train: Avg Loss = 0.7632
+  [Client 2] Evaluate Reward: R_i = 3.09% (264/8543)
+  [Client 3] Local Train: Avg Loss = 1.0800
+  [Client 3] Evaluate Reward: R_i = 4.87% (535/10991)
+  [Client 0] Local Train: Avg Loss = 1.0304
+  [Client 0] Evaluate Reward: R_i = 15.70% (2478/15781)
+  [Client 1] Local Train: Avg Loss = 1.2687
+  [Client 1] Evaluate Reward: R_i = 14.20% (1488/10477)
+  [Client 2] Local Train: Avg Loss = 0.7391
+  [Client 2] Evaluate Reward: R_i = 2.06% (176/8543)
+  [Client 3] Local Train: Avg Loss = 1.0633
+  [Client 3] Evaluate Reward: R_i = 8.83% (970/10991)
+  [Client 0] Local Train: Avg Loss = 1.0158
+  [Client 0] Evaluate Reward: R_i = 5.43% (857/15781)
+  [Client 1] Local Train: Avg Loss = 1.2562
+  [Client 1] Evaluate Reward: R_i = 17.83% (1868/10477)
+  [Client 2] Local Train: Avg Loss = 0.7185
+  [Client 2] Evaluate Reward: R_i = 3.22% (275/8543)
+  [Client 3] Local Train: Avg Loss = 1.0442
+  [Client 3] Evaluate Reward: R_i = 6.73% (740/10991)
+  [Client 0] Local Train: Avg Loss = 1.0039
+  [Client 0] Evaluate Reward: R_i = 3.13% (494/15781)
+  [Client 1] Local Train: Avg Loss = 1.2380
+  [Client 1] Evaluate Reward: R_i = 14.85% (1556/10477)
+  [Client 2] Local Train: Avg Loss = 0.7020
+  [Client 2] Evaluate Reward: R_i = 2.76% (236/8543)
+  [Client 3] Local Train: Avg Loss = 1.0259
+  [Client 3] Evaluate Reward: R_i = 1.31% (144/10991)
+  [Client 0] Local Train: Avg Loss = 0.9901
+  [Client 0] Evaluate Reward: R_i = 11.94% (1884/15781)
+  [Client 1] Local Train: Avg Loss = 1.2263
+  [Client 1] Evaluate Reward: R_i = 8.85% (927/10477)
+  [Client 2] Local Train: Avg Loss = 0.6860
+  [Client 2] Evaluate Reward: R_i = 2.98% (255/8543)
+  [Client 3] Local Train: Avg Loss = 1.0144
+  [Client 3] Evaluate Reward: R_i = 3.55% (390/10991)
+  [Client 0] Local Train: Avg Loss = 0.9823
+  [Client 0] Evaluate Reward: R_i = 19.76% (3119/15781)
+  [Client 1] Local Train: Avg Loss = 1.2155
+  [Client 1] Evaluate Reward: R_i = 11.97% (1254/10477)
+  [Client 2] Local Train: Avg Loss = 0.6679
+  [Client 2] Evaluate Reward: R_i = 2.53% (216/8543)
+  [Client 3] Local Train: Avg Loss = 1.0004
+  [Client 3] Evaluate Reward: R_i = 1.75% (192/10991)
+  [Client 0] Local Train: Avg Loss = 0.9666
+  [Client 0] Evaluate Reward: R_i = 5.25% (828/15781)
+  [Client 1] Local Train: Avg Loss = 1.2081
+  [Client 1] Evaluate Reward: R_i = 9.89% (1036/10477)
+  [Client 2] Local Train: Avg Loss = 0.6560
+  [Client 2] Evaluate Reward: R_i = 3.00% (256/8543)
+  [Client 3] Local Train: Avg Loss = 0.9854
+  [Client 3] Evaluate Reward: R_i = 1.56% (172/10991)
+  [Client 0] Local Train: Avg Loss = 0.9559
+  [Client 0] Evaluate Reward: R_i = 14.30% (2257/15781)
+  [Client 1] Local Train: Avg Loss = 1.1924
+  [Client 1] Evaluate Reward: R_i = 7.37% (772/10477)
+  [Client 2] Local Train: Avg Loss = 0.6446
+  [Client 2] Evaluate Reward: R_i = 3.07% (262/8543)
+  [Client 3] Local Train: Avg Loss = 0.9741
+  [Client 3] Evaluate Reward: R_i = 1.53% (168/10991)
+  [Client 0] Local Train: Avg Loss = 0.9471
+  [Client 0] Evaluate Reward: R_i = 7.38% (1164/15781)
+  [Client 1] Local Train: Avg Loss = 1.1824
+  [Client 1] Evaluate Reward: R_i = 5.80% (608/10477)
+  [Client 2] Local Train: Avg Loss = 0.6355
+  [Client 2] Evaluate Reward: R_i = 2.70% (231/8543)
+  [Client 3] Local Train: Avg Loss = 0.9605
+  [Client 3] Evaluate Reward: R_i = 2.06% (226/10991)
+  [Client 0] Local Train: Avg Loss = 0.9413
+  [Client 0] Evaluate Reward: R_i = 5.23% (825/15781)
+  [Client 1] Local Train: Avg Loss = 1.1693
+  [Client 1] Evaluate Reward: R_i = 5.18% (543/10477)
+  [Client 2] Local Train: Avg Loss = 0.6245
+  [Client 2] Evaluate Reward: R_i = 2.48% (212/8543)
+  [Client 3] Local Train: Avg Loss = 0.9487
+  [Client 3] Evaluate Reward: R_i = 2.73% (300/10991)
+  [Client 0] Local Train: Avg Loss = 0.9292
+  [Client 0] Evaluate Reward: R_i = 15.27% (2410/15781)
+  [Client 1] Local Train: Avg Loss = 1.1619
+  [Client 1] Evaluate Reward: R_i = 6.59% (690/10477)
+  [Client 2] Local Train: Avg Loss = 0.6135
+  [Client 2] Evaluate Reward: R_i = 2.82% (241/8543)
+  [Client 3] Local Train: Avg Loss = 0.9387
+  [Client 3] Evaluate Reward: R_i = 2.33% (256/10991)
+  [Client 0] Local Train: Avg Loss = 0.9205
+  [Client 0] Evaluate Reward: R_i = 12.39% (1956/15781)
+  [Client 1] Local Train: Avg Loss = 1.1533
+  [Client 1] Evaluate Reward: R_i = 5.24% (549/10477)
+  [Client 2] Local Train: Avg Loss = 0.6046
+  [Client 2] Evaluate Reward: R_i = 2.73% (233/8543)
+  [Client 3] Local Train: Avg Loss = 0.9295
+  [Client 3] Evaluate Reward: R_i = 1.56% (172/10991)
+  [Client 0] Local Train: Avg Loss = 0.9132
+  [Client 0] Evaluate Reward: R_i = 18.09% (2855/15781)
+  [Client 1] Local Train: Avg Loss = 1.1472
+  [Client 1] Evaluate Reward: R_i = 5.12% (536/10477)
+  [Client 2] Local Train: Avg Loss = 0.5968
+  [Client 2] Evaluate Reward: R_i = 3.75% (320/8543)
+  [Client 3] Local Train: Avg Loss = 0.9183
+  [Client 3] Evaluate Reward: R_i = 4.98% (547/10991)
+[Validate] Client 0 除外: Acc_sim_i = 9.7200% -> Delta_i = 1.9200%
+
+[Validate] (2/5) Client 1 を除外して再学習...
+  [Client 0] Local Train: Avg Loss = 1.7952
+  [Client 0] Evaluate Reward: R_i = 15.00% (631/4208)
+  [Client 1] Local Train: Avg Loss = 1.7478
+  [Client 1] Evaluate Reward: R_i = 11.42% (1196/10477)
+  [Client 2] Local Train: Avg Loss = 1.1781
+  [Client 2] Evaluate Reward: R_i = 18.90% (1615/8543)
+  [Client 3] Local Train: Avg Loss = 1.5233
+  [Client 3] Evaluate Reward: R_i = 2.07% (227/10991)
+  [Client 0] Local Train: Avg Loss = 1.5164
+  [Client 0] Evaluate Reward: R_i = 4.59% (193/4208)
+  [Client 1] Local Train: Avg Loss = 1.5587
+  [Client 1] Evaluate Reward: R_i = 15.16% (1588/10477)
+  [Client 2] Local Train: Avg Loss = 0.9638
+  [Client 2] Evaluate Reward: R_i = 10.03% (857/8543)
+  [Client 3] Local Train: Avg Loss = 1.2992
+  [Client 3] Evaluate Reward: R_i = 10.75% (1181/10991)
+  [Client 0] Local Train: Avg Loss = 1.4460
+  [Client 0] Evaluate Reward: R_i = 7.03% (296/4208)
+  [Client 1] Local Train: Avg Loss = 1.4694
+  [Client 1] Evaluate Reward: R_i = 14.78% (1549/10477)
+  [Client 2] Local Train: Avg Loss = 0.8734
+  [Client 2] Evaluate Reward: R_i = 1.97% (168/8543)
+  [Client 3] Local Train: Avg Loss = 1.2081
+  [Client 3] Evaluate Reward: R_i = 7.75% (852/10991)
+  [Client 0] Local Train: Avg Loss = 1.4024
+  [Client 0] Evaluate Reward: R_i = 7.11% (299/4208)
+  [Client 1] Local Train: Avg Loss = 1.4064
+  [Client 1] Evaluate Reward: R_i = 12.37% (1296/10477)
+  [Client 2] Local Train: Avg Loss = 0.8137
+  [Client 2] Evaluate Reward: R_i = 11.64% (994/8543)
+  [Client 3] Local Train: Avg Loss = 1.1511
+  [Client 3] Evaluate Reward: R_i = 8.68% (954/10991)
+  [Client 0] Local Train: Avg Loss = 1.3642
+  [Client 0] Evaluate Reward: R_i = 6.99% (294/4208)
+  [Client 1] Local Train: Avg Loss = 1.3606
+  [Client 1] Evaluate Reward: R_i = 10.49% (1099/10477)
+  [Client 2] Local Train: Avg Loss = 0.7732
+  [Client 2] Evaluate Reward: R_i = 10.52% (899/8543)
+  [Client 3] Local Train: Avg Loss = 1.1092
+  [Client 3] Evaluate Reward: R_i = 10.52% (1156/10991)
+  [Client 0] Local Train: Avg Loss = 1.3338
+  [Client 0] Evaluate Reward: R_i = 10.10% (425/4208)
+  [Client 1] Local Train: Avg Loss = 1.3282
+  [Client 1] Evaluate Reward: R_i = 10.78% (1129/10477)
+  [Client 2] Local Train: Avg Loss = 0.7400
+  [Client 2] Evaluate Reward: R_i = 14.27% (1219/8543)
+  [Client 3] Local Train: Avg Loss = 1.0789
+  [Client 3] Evaluate Reward: R_i = 7.83% (861/10991)
+  [Client 0] Local Train: Avg Loss = 1.3052
+  [Client 0] Evaluate Reward: R_i = 8.72% (367/4208)
+  [Client 1] Local Train: Avg Loss = 1.3028
+  [Client 1] Evaluate Reward: R_i = 16.44% (1722/10477)
+  [Client 2] Local Train: Avg Loss = 0.7135
+  [Client 2] Evaluate Reward: R_i = 4.73% (404/8543)
+  [Client 3] Local Train: Avg Loss = 1.0526
+  [Client 3] Evaluate Reward: R_i = 9.43% (1036/10991)
+  [Client 0] Local Train: Avg Loss = 1.2825
+  [Client 0] Evaluate Reward: R_i = 10.96% (461/4208)
+  [Client 1] Local Train: Avg Loss = 1.2803
+  [Client 1] Evaluate Reward: R_i = 19.72% (2066/10477)
+  [Client 2] Local Train: Avg Loss = 0.6893
+  [Client 2] Evaluate Reward: R_i = 20.51% (1752/8543)
+  [Client 3] Local Train: Avg Loss = 1.0301
+  [Client 3] Evaluate Reward: R_i = 12.17% (1338/10991)
+  [Client 0] Local Train: Avg Loss = 1.2596
+  [Client 0] Evaluate Reward: R_i = 10.74% (452/4208)
+  [Client 1] Local Train: Avg Loss = 1.2617
+  [Client 1] Evaluate Reward: R_i = 19.92% (2087/10477)
+  [Client 2] Local Train: Avg Loss = 0.6700
+  [Client 2] Evaluate Reward: R_i = 23.25% (1986/8543)
+  [Client 3] Local Train: Avg Loss = 1.0119
+  [Client 3] Evaluate Reward: R_i = 13.90% (1528/10991)
+  [Client 0] Local Train: Avg Loss = 1.2376
+  [Client 0] Evaluate Reward: R_i = 10.81% (455/4208)
+  [Client 1] Local Train: Avg Loss = 1.2433
+  [Client 1] Evaluate Reward: R_i = 18.23% (1910/10477)
+  [Client 2] Local Train: Avg Loss = 0.6508
+  [Client 2] Evaluate Reward: R_i = 29.51% (2521/8543)
+  [Client 3] Local Train: Avg Loss = 0.9939
+  [Client 3] Evaluate Reward: R_i = 5.28% (580/10991)
+  [Client 0] Local Train: Avg Loss = 1.2183
+  [Client 0] Evaluate Reward: R_i = 5.11% (215/4208)
+  [Client 1] Local Train: Avg Loss = 1.2277
+  [Client 1] Evaluate Reward: R_i = 16.13% (1690/10477)
+  [Client 2] Local Train: Avg Loss = 0.6353
+  [Client 2] Evaluate Reward: R_i = 1.46% (125/8543)
+  [Client 3] Local Train: Avg Loss = 0.9797
+  [Client 3] Evaluate Reward: R_i = 35.46% (3897/10991)
+  [Client 0] Local Train: Avg Loss = 1.2007
+  [Client 0] Evaluate Reward: R_i = 9.96% (419/4208)
+  [Client 1] Local Train: Avg Loss = 1.2117
+  [Client 1] Evaluate Reward: R_i = 13.12% (1375/10477)
+  [Client 2] Local Train: Avg Loss = 0.6212
+  [Client 2] Evaluate Reward: R_i = 1.62% (138/8543)
+  [Client 3] Local Train: Avg Loss = 0.9646
+  [Client 3] Evaluate Reward: R_i = 35.90% (3946/10991)
+  [Client 0] Local Train: Avg Loss = 1.1816
+  [Client 0] Evaluate Reward: R_i = 9.41% (396/4208)
+  [Client 1] Local Train: Avg Loss = 1.1996
+  [Client 1] Evaluate Reward: R_i = 18.36% (1924/10477)
+  [Client 2] Local Train: Avg Loss = 0.6071
+  [Client 2] Evaluate Reward: R_i = 2.56% (219/8543)
+  [Client 3] Local Train: Avg Loss = 0.9516
+  [Client 3] Evaluate Reward: R_i = 28.28% (3108/10991)
+  [Client 0] Local Train: Avg Loss = 1.1649
+  [Client 0] Evaluate Reward: R_i = 7.27% (306/4208)
+  [Client 1] Local Train: Avg Loss = 1.1850
+  [Client 1] Evaluate Reward: R_i = 15.20% (1592/10477)
+  [Client 2] Local Train: Avg Loss = 0.5945
+  [Client 2] Evaluate Reward: R_i = 5.24% (448/8543)
+  [Client 3] Local Train: Avg Loss = 0.9374
+  [Client 3] Evaluate Reward: R_i = 31.55% (3468/10991)
+  [Client 0] Local Train: Avg Loss = 1.1509
+  [Client 0] Evaluate Reward: R_i = 6.30% (265/4208)
+  [Client 1] Local Train: Avg Loss = 1.1754
+  [Client 1] Evaluate Reward: R_i = 13.95% (1462/10477)
+  [Client 2] Local Train: Avg Loss = 0.5831
+  [Client 2] Evaluate Reward: R_i = 27.44% (2344/8543)
+  [Client 3] Local Train: Avg Loss = 0.9259
+  [Client 3] Evaluate Reward: R_i = 31.83% (3498/10991)
+  [Client 0] Local Train: Avg Loss = 1.1337
+  [Client 0] Evaluate Reward: R_i = 5.11% (215/4208)
+  [Client 1] Local Train: Avg Loss = 1.1629
+  [Client 1] Evaluate Reward: R_i = 17.39% (1822/10477)
+  [Client 2] Local Train: Avg Loss = 0.5728
+  [Client 2] Evaluate Reward: R_i = 43.16% (3687/8543)
+  [Client 3] Local Train: Avg Loss = 0.9155
+  [Client 3] Evaluate Reward: R_i = 34.23% (3762/10991)
+  [Client 0] Local Train: Avg Loss = 1.1162
+  [Client 0] Evaluate Reward: R_i = 7.56% (318/4208)
+  [Client 1] Local Train: Avg Loss = 1.1517
+  [Client 1] Evaluate Reward: R_i = 18.11% (1897/10477)
+  [Client 2] Local Train: Avg Loss = 0.5610
+  [Client 2] Evaluate Reward: R_i = 40.47% (3457/8543)
+  [Client 3] Local Train: Avg Loss = 0.9034
+  [Client 3] Evaluate Reward: R_i = 28.02% (3080/10991)
+  [Client 0] Local Train: Avg Loss = 1.1036
+  [Client 0] Evaluate Reward: R_i = 8.22% (346/4208)
+  [Client 1] Local Train: Avg Loss = 1.1390
+  [Client 1] Evaluate Reward: R_i = 18.41% (1929/10477)
+  [Client 2] Local Train: Avg Loss = 0.5524
+  [Client 2] Evaluate Reward: R_i = 38.75% (3310/8543)
+  [Client 3] Local Train: Avg Loss = 0.8924
+  [Client 3] Evaluate Reward: R_i = 23.88% (2625/10991)
+  [Client 0] Local Train: Avg Loss = 1.0903
+  [Client 0] Evaluate Reward: R_i = 9.67% (407/4208)
+  [Client 1] Local Train: Avg Loss = 1.1278
+  [Client 1] Evaluate Reward: R_i = 19.45% (2038/10477)
+  [Client 2] Local Train: Avg Loss = 0.5426
+  [Client 2] Evaluate Reward: R_i = 40.44% (3455/8543)
+  [Client 3] Local Train: Avg Loss = 0.8812
+  [Client 3] Evaluate Reward: R_i = 22.80% (2506/10991)
+  [Client 0] Local Train: Avg Loss = 1.0775
+  [Client 0] Evaluate Reward: R_i = 9.05% (381/4208)
+  [Client 1] Local Train: Avg Loss = 1.1193
+  [Client 1] Evaluate Reward: R_i = 19.27% (2019/10477)
+  [Client 2] Local Train: Avg Loss = 0.5334
+  [Client 2] Evaluate Reward: R_i = 41.26% (3525/8543)
+  [Client 3] Local Train: Avg Loss = 0.8724
+  [Client 3] Evaluate Reward: R_i = 20.40% (2242/10991)
+[Validate] Client 1 除外: Acc_sim_i = 11.0200% -> Delta_i = 0.6200%
+
+[Validate] (3/5) Client 2 を除外して再学習...
+  [Client 0] Local Train: Avg Loss = 1.9377
+  [Client 0] Evaluate Reward: R_i = 28.21% (1187/4208)
+  [Client 1] Local Train: Avg Loss = 1.5821
+  [Client 1] Evaluate Reward: R_i = 8.07% (1274/15781)
+  [Client 2] Local Train: Avg Loss = 1.3805
+  [Client 2] Evaluate Reward: R_i = 0.59% (50/8543)
+  [Client 3] Local Train: Avg Loss = 1.6316
+  [Client 3] Evaluate Reward: R_i = 4.45% (489/10991)
+  [Client 0] Local Train: Avg Loss = 1.7017
+  [Client 0] Evaluate Reward: R_i = 7.49% (315/4208)
+  [Client 1] Local Train: Avg Loss = 1.3197
+  [Client 1] Evaluate Reward: R_i = 2.86% (451/15781)
+  [Client 2] Local Train: Avg Loss = 1.0190
+  [Client 2] Evaluate Reward: R_i = 7.61% (650/8543)
+  [Client 3] Local Train: Avg Loss = 1.3935
+  [Client 3] Evaluate Reward: R_i = 3.24% (356/10991)
+  [Client 0] Local Train: Avg Loss = 1.5819
+  [Client 0] Evaluate Reward: R_i = 25.21% (1061/4208)
+  [Client 1] Local Train: Avg Loss = 1.2319
+  [Client 1] Evaluate Reward: R_i = 3.68% (580/15781)
+  [Client 2] Local Train: Avg Loss = 0.9289
+  [Client 2] Evaluate Reward: R_i = 10.86% (928/8543)
+  [Client 3] Local Train: Avg Loss = 1.2749
+  [Client 3] Evaluate Reward: R_i = 2.98% (327/10991)
+  [Client 0] Local Train: Avg Loss = 1.5214
+  [Client 0] Evaluate Reward: R_i = 12.95% (545/4208)
+  [Client 1] Local Train: Avg Loss = 1.1754
+  [Client 1] Evaluate Reward: R_i = 24.86% (3923/15781)
+  [Client 2] Local Train: Avg Loss = 0.8762
+  [Client 2] Evaluate Reward: R_i = 22.44% (1917/8543)
+  [Client 3] Local Train: Avg Loss = 1.2092
+  [Client 3] Evaluate Reward: R_i = 3.08% (339/10991)
+  [Client 0] Local Train: Avg Loss = 1.4735
+  [Client 0] Evaluate Reward: R_i = 16.49% (694/4208)
+  [Client 1] Local Train: Avg Loss = 1.1248
+  [Client 1] Evaluate Reward: R_i = 28.18% (4447/15781)
+  [Client 2] Local Train: Avg Loss = 0.8385
+  [Client 2] Evaluate Reward: R_i = 5.17% (442/8543)
+  [Client 3] Local Train: Avg Loss = 1.1659
+  [Client 3] Evaluate Reward: R_i = 3.08% (339/10991)
+  [Client 0] Local Train: Avg Loss = 1.4312
+  [Client 0] Evaluate Reward: R_i = 3.75% (158/4208)
+  [Client 1] Local Train: Avg Loss = 1.0814
+  [Client 1] Evaluate Reward: R_i = 26.62% (4201/15781)
+  [Client 2] Local Train: Avg Loss = 0.8071
+  [Client 2] Evaluate Reward: R_i = 5.28% (451/8543)
+  [Client 3] Local Train: Avg Loss = 1.1354
+  [Client 3] Evaluate Reward: R_i = 3.62% (398/10991)
+  [Client 0] Local Train: Avg Loss = 1.3921
+  [Client 0] Evaluate Reward: R_i = 3.42% (144/4208)
+  [Client 1] Local Train: Avg Loss = 1.0465
+  [Client 1] Evaluate Reward: R_i = 9.89% (1560/15781)
+  [Client 2] Local Train: Avg Loss = 0.7818
+  [Client 2] Evaluate Reward: R_i = 3.07% (262/8543)
+  [Client 3] Local Train: Avg Loss = 1.1080
+  [Client 3] Evaluate Reward: R_i = 1.80% (198/10991)
+  [Client 0] Local Train: Avg Loss = 1.3585
+  [Client 0] Evaluate Reward: R_i = 4.47% (188/4208)
+  [Client 1] Local Train: Avg Loss = 1.0193
+  [Client 1] Evaluate Reward: R_i = 10.53% (1661/15781)
+  [Client 2] Local Train: Avg Loss = 0.7595
+  [Client 2] Evaluate Reward: R_i = 6.91% (590/8543)
+  [Client 3] Local Train: Avg Loss = 1.0841
+  [Client 3] Evaluate Reward: R_i = 1.57% (173/10991)
+  [Client 0] Local Train: Avg Loss = 1.3282
+  [Client 0] Evaluate Reward: R_i = 3.23% (136/4208)
+  [Client 1] Local Train: Avg Loss = 0.9991
+  [Client 1] Evaluate Reward: R_i = 13.98% (2206/15781)
+  [Client 2] Local Train: Avg Loss = 0.7380
+  [Client 2] Evaluate Reward: R_i = 12.96% (1107/8543)
+  [Client 3] Local Train: Avg Loss = 1.0634
+  [Client 3] Evaluate Reward: R_i = 2.18% (240/10991)
+  [Client 0] Local Train: Avg Loss = 1.2979
+  [Client 0] Evaluate Reward: R_i = 2.50% (105/4208)
+  [Client 1] Local Train: Avg Loss = 0.9797
+  [Client 1] Evaluate Reward: R_i = 8.94% (1411/15781)
+  [Client 2] Local Train: Avg Loss = 0.7191
+  [Client 2] Evaluate Reward: R_i = 7.95% (679/8543)
+  [Client 3] Local Train: Avg Loss = 1.0453
+  [Client 3] Evaluate Reward: R_i = 2.09% (230/10991)
+  [Client 0] Local Train: Avg Loss = 1.2708
+  [Client 0] Evaluate Reward: R_i = 2.95% (124/4208)
+  [Client 1] Local Train: Avg Loss = 0.9635
+  [Client 1] Evaluate Reward: R_i = 8.21% (1296/15781)
+  [Client 2] Local Train: Avg Loss = 0.7014
+  [Client 2] Evaluate Reward: R_i = 3.96% (338/8543)
+  [Client 3] Local Train: Avg Loss = 1.0256
+  [Client 3] Evaluate Reward: R_i = 1.82% (200/10991)
+  [Client 0] Local Train: Avg Loss = 1.2473
+  [Client 0] Evaluate Reward: R_i = 2.14% (90/4208)
+  [Client 1] Local Train: Avg Loss = 0.9487
+  [Client 1] Evaluate Reward: R_i = 10.31% (1627/15781)
+  [Client 2] Local Train: Avg Loss = 0.6842
+  [Client 2] Evaluate Reward: R_i = 2.40% (205/8543)
+  [Client 3] Local Train: Avg Loss = 1.0100
+  [Client 3] Evaluate Reward: R_i = 2.20% (242/10991)
+  [Client 0] Local Train: Avg Loss = 1.2239
+  [Client 0] Evaluate Reward: R_i = 2.31% (97/4208)
+  [Client 1] Local Train: Avg Loss = 0.9343
+  [Client 1] Evaluate Reward: R_i = 10.50% (1657/15781)
+  [Client 2] Local Train: Avg Loss = 0.6682
+  [Client 2] Evaluate Reward: R_i = 2.38% (203/8543)
+  [Client 3] Local Train: Avg Loss = 0.9928
+  [Client 3] Evaluate Reward: R_i = 2.09% (230/10991)
+  [Client 0] Local Train: Avg Loss = 1.2001
+  [Client 0] Evaluate Reward: R_i = 2.19% (92/4208)
+  [Client 1] Local Train: Avg Loss = 0.9218
+  [Client 1] Evaluate Reward: R_i = 14.18% (2237/15781)
+  [Client 2] Local Train: Avg Loss = 0.6539
+  [Client 2] Evaluate Reward: R_i = 4.89% (418/8543)
+  [Client 3] Local Train: Avg Loss = 0.9791
+  [Client 3] Evaluate Reward: R_i = 2.14% (235/10991)
+  [Client 0] Local Train: Avg Loss = 1.1807
+  [Client 0] Evaluate Reward: R_i = 3.26% (137/4208)
+  [Client 1] Local Train: Avg Loss = 0.9120
+  [Client 1] Evaluate Reward: R_i = 11.01% (1737/15781)
+  [Client 2] Local Train: Avg Loss = 0.6416
+  [Client 2] Evaluate Reward: R_i = 10.39% (888/8543)
+  [Client 3] Local Train: Avg Loss = 0.9651
+  [Client 3] Evaluate Reward: R_i = 1.81% (199/10991)
+  [Client 0] Local Train: Avg Loss = 1.1600
+  [Client 0] Evaluate Reward: R_i = 2.09% (88/4208)
+  [Client 1] Local Train: Avg Loss = 0.9020
+  [Client 1] Evaluate Reward: R_i = 11.93% (1883/15781)
+  [Client 2] Local Train: Avg Loss = 0.6280
+  [Client 2] Evaluate Reward: R_i = 23.70% (2025/8543)
+  [Client 3] Local Train: Avg Loss = 0.9522
+  [Client 3] Evaluate Reward: R_i = 2.22% (244/10991)
+  [Client 0] Local Train: Avg Loss = 1.1414
+  [Client 0] Evaluate Reward: R_i = 2.42% (102/4208)
+  [Client 1] Local Train: Avg Loss = 0.8913
+  [Client 1] Evaluate Reward: R_i = 10.63% (1677/15781)
+  [Client 2] Local Train: Avg Loss = 0.6148
+  [Client 2] Evaluate Reward: R_i = 21.37% (1826/8543)
+  [Client 3] Local Train: Avg Loss = 0.9400
+  [Client 3] Evaluate Reward: R_i = 1.90% (209/10991)
+  [Client 0] Local Train: Avg Loss = 1.1238
+  [Client 0] Evaluate Reward: R_i = 2.02% (85/4208)
+  [Client 1] Local Train: Avg Loss = 0.8844
+  [Client 1] Evaluate Reward: R_i = 14.66% (2314/15781)
+  [Client 2] Local Train: Avg Loss = 0.6047
+  [Client 2] Evaluate Reward: R_i = 14.87% (1270/8543)
+  [Client 3] Local Train: Avg Loss = 0.9259
+  [Client 3] Evaluate Reward: R_i = 2.06% (226/10991)
+  [Client 0] Local Train: Avg Loss = 1.1064
+  [Client 0] Evaluate Reward: R_i = 2.02% (85/4208)
+  [Client 1] Local Train: Avg Loss = 0.8745
+  [Client 1] Evaluate Reward: R_i = 12.17% (1920/15781)
+  [Client 2] Local Train: Avg Loss = 0.5924
+  [Client 2] Evaluate Reward: R_i = 16.77% (1433/8543)
+  [Client 3] Local Train: Avg Loss = 0.9153
+  [Client 3] Evaluate Reward: R_i = 3.04% (334/10991)
+  [Client 0] Local Train: Avg Loss = 1.0925
+  [Client 0] Evaluate Reward: R_i = 1.83% (77/4208)
+  [Client 1] Local Train: Avg Loss = 0.8670
+  [Client 1] Evaluate Reward: R_i = 18.95% (2990/15781)
+  [Client 2] Local Train: Avg Loss = 0.5814
+  [Client 2] Evaluate Reward: R_i = 14.34% (1225/8543)
+  [Client 3] Local Train: Avg Loss = 0.9029
+  [Client 3] Evaluate Reward: R_i = 2.07% (227/10991)
+[Validate] Client 2 除外: Acc_sim_i = 8.1100% -> Delta_i = 3.5300%
+
+[Validate] (4/5) Client 3 を除外して再学習...
+  [Client 0] Local Train: Avg Loss = 1.8506
+  [Client 0] Evaluate Reward: R_i = 13.66% (575/4208)
+  [Client 1] Local Train: Avg Loss = 1.5814
+  [Client 1] Evaluate Reward: R_i = 11.46% (1809/15781)
+  [Client 2] Local Train: Avg Loss = 1.7781
+  [Client 2] Evaluate Reward: R_i = 2.99% (313/10477)
+  [Client 3] Local Train: Avg Loss = 1.5406
+  [Client 3] Evaluate Reward: R_i = 11.21% (1232/10991)
+  [Client 0] Local Train: Avg Loss = 1.5487
+  [Client 0] Evaluate Reward: R_i = 7.56% (318/4208)
+  [Client 1] Local Train: Avg Loss = 1.3500
+  [Client 1] Evaluate Reward: R_i = 4.28% (675/15781)
+  [Client 2] Local Train: Avg Loss = 1.5785
+  [Client 2] Evaluate Reward: R_i = 12.34% (1293/10477)
+  [Client 3] Local Train: Avg Loss = 1.3403
+  [Client 3] Evaluate Reward: R_i = 3.98% (437/10991)
+  [Client 0] Local Train: Avg Loss = 1.4919
+  [Client 0] Evaluate Reward: R_i = 0.67% (28/4208)
+  [Client 1] Local Train: Avg Loss = 1.2421
+  [Client 1] Evaluate Reward: R_i = 19.87% (3135/15781)
+  [Client 2] Local Train: Avg Loss = 1.5067
+  [Client 2] Evaluate Reward: R_i = 6.56% (687/10477)
+  [Client 3] Local Train: Avg Loss = 1.2592
+  [Client 3] Evaluate Reward: R_i = 9.43% (1037/10991)
+  [Client 0] Local Train: Avg Loss = 1.4475
+  [Client 0] Evaluate Reward: R_i = 1.35% (57/4208)
+  [Client 1] Local Train: Avg Loss = 1.1727
+  [Client 1] Evaluate Reward: R_i = 24.48% (3863/15781)
+  [Client 2] Local Train: Avg Loss = 1.4590
+  [Client 2] Evaluate Reward: R_i = 2.28% (239/10477)
+  [Client 3] Local Train: Avg Loss = 1.2053
+  [Client 3] Evaluate Reward: R_i = 3.72% (409/10991)
+  [Client 0] Local Train: Avg Loss = 1.4069
+  [Client 0] Evaluate Reward: R_i = 13.14% (553/4208)
+  [Client 1] Local Train: Avg Loss = 1.1289
+  [Client 1] Evaluate Reward: R_i = 25.47% (4019/15781)
+  [Client 2] Local Train: Avg Loss = 1.4210
+  [Client 2] Evaluate Reward: R_i = 4.00% (419/10477)
+  [Client 3] Local Train: Avg Loss = 1.1654
+  [Client 3] Evaluate Reward: R_i = 0.61% (67/10991)
+  [Client 0] Local Train: Avg Loss = 1.3694
+  [Client 0] Evaluate Reward: R_i = 23.27% (979/4208)
+  [Client 1] Local Train: Avg Loss = 1.0983
+  [Client 1] Evaluate Reward: R_i = 4.77% (752/15781)
+  [Client 2] Local Train: Avg Loss = 1.3893
+  [Client 2] Evaluate Reward: R_i = 5.02% (526/10477)
+  [Client 3] Local Train: Avg Loss = 1.1345
+  [Client 3] Evaluate Reward: R_i = 5.08% (558/10991)
+  [Client 0] Local Train: Avg Loss = 1.3391
+  [Client 0] Evaluate Reward: R_i = 19.82% (834/4208)
+  [Client 1] Local Train: Avg Loss = 1.0748
+  [Client 1] Evaluate Reward: R_i = 17.90% (2825/15781)
+  [Client 2] Local Train: Avg Loss = 1.3596
+  [Client 2] Evaluate Reward: R_i = 4.57% (479/10477)
+  [Client 3] Local Train: Avg Loss = 1.1073
+  [Client 3] Evaluate Reward: R_i = 9.47% (1041/10991)
+  [Client 0] Local Train: Avg Loss = 1.3144
+  [Client 0] Evaluate Reward: R_i = 16.99% (715/4208)
+  [Client 1] Local Train: Avg Loss = 1.0561
+  [Client 1] Evaluate Reward: R_i = 26.80% (4230/15781)
+  [Client 2] Local Train: Avg Loss = 1.3353
+  [Client 2] Evaluate Reward: R_i = 3.99% (418/10477)
+  [Client 3] Local Train: Avg Loss = 1.0854
+  [Client 3] Evaluate Reward: R_i = 8.59% (944/10991)
+  [Client 0] Local Train: Avg Loss = 1.2925
+  [Client 0] Evaluate Reward: R_i = 26.81% (1128/4208)
+  [Client 1] Local Train: Avg Loss = 1.0419
+  [Client 1] Evaluate Reward: R_i = 23.47% (3704/15781)
+  [Client 2] Local Train: Avg Loss = 1.3134
+  [Client 2] Evaluate Reward: R_i = 4.38% (459/10477)
+  [Client 3] Local Train: Avg Loss = 1.0659
+  [Client 3] Evaluate Reward: R_i = 9.44% (1038/10991)
+  [Client 0] Local Train: Avg Loss = 1.2695
+  [Client 0] Evaluate Reward: R_i = 26.47% (1114/4208)
+  [Client 1] Local Train: Avg Loss = 1.0272
+  [Client 1] Evaluate Reward: R_i = 23.26% (3671/15781)
+  [Client 2] Local Train: Avg Loss = 1.2927
+  [Client 2] Evaluate Reward: R_i = 4.89% (512/10477)
+  [Client 3] Local Train: Avg Loss = 1.0493
+  [Client 3] Evaluate Reward: R_i = 9.18% (1009/10991)
+  [Client 0] Local Train: Avg Loss = 1.2525
+  [Client 0] Evaluate Reward: R_i = 27.26% (1147/4208)
+  [Client 1] Local Train: Avg Loss = 1.0146
+  [Client 1] Evaluate Reward: R_i = 22.98% (3627/15781)
+  [Client 2] Local Train: Avg Loss = 1.2735
+  [Client 2] Evaluate Reward: R_i = 4.11% (431/10477)
+  [Client 3] Local Train: Avg Loss = 1.0339
+  [Client 3] Evaluate Reward: R_i = 9.68% (1064/10991)
+  [Client 0] Local Train: Avg Loss = 1.2357
+  [Client 0] Evaluate Reward: R_i = 21.96% (924/4208)
+  [Client 1] Local Train: Avg Loss = 1.0053
+  [Client 1] Evaluate Reward: R_i = 22.22% (3506/15781)
+  [Client 2] Local Train: Avg Loss = 1.2562
+  [Client 2] Evaluate Reward: R_i = 2.72% (285/10477)
+  [Client 3] Local Train: Avg Loss = 1.0190
+  [Client 3] Evaluate Reward: R_i = 14.88% (1635/10991)
+  [Client 0] Local Train: Avg Loss = 1.2193
+  [Client 0] Evaluate Reward: R_i = 22.96% (966/4208)
+  [Client 1] Local Train: Avg Loss = 0.9958
+  [Client 1] Evaluate Reward: R_i = 22.13% (3493/15781)
+  [Client 2] Local Train: Avg Loss = 1.2418
+  [Client 2] Evaluate Reward: R_i = 2.55% (267/10477)
+  [Client 3] Local Train: Avg Loss = 1.0064
+  [Client 3] Evaluate Reward: R_i = 30.36% (3337/10991)
+  [Client 0] Local Train: Avg Loss = 1.2031
+  [Client 0] Evaluate Reward: R_i = 21.86% (920/4208)
+  [Client 1] Local Train: Avg Loss = 0.9886
+  [Client 1] Evaluate Reward: R_i = 27.56% (4349/15781)
+  [Client 2] Local Train: Avg Loss = 1.2284
+  [Client 2] Evaluate Reward: R_i = 6.17% (646/10477)
+  [Client 3] Local Train: Avg Loss = 0.9940
+  [Client 3] Evaluate Reward: R_i = 36.19% (3978/10991)
+  [Client 0] Local Train: Avg Loss = 1.1868
+  [Client 0] Evaluate Reward: R_i = 21.39% (900/4208)
+  [Client 1] Local Train: Avg Loss = 0.9773
+  [Client 1] Evaluate Reward: R_i = 31.39% (4954/15781)
+  [Client 2] Local Train: Avg Loss = 1.2133
+  [Client 2] Evaluate Reward: R_i = 5.69% (596/10477)
+  [Client 3] Local Train: Avg Loss = 0.9829
+  [Client 3] Evaluate Reward: R_i = 29.30% (3220/10991)
+  [Client 0] Local Train: Avg Loss = 1.1734
+  [Client 0] Evaluate Reward: R_i = 19.23% (809/4208)
+  [Client 1] Local Train: Avg Loss = 0.9703
+  [Client 1] Evaluate Reward: R_i = 22.89% (3612/15781)
+  [Client 2] Local Train: Avg Loss = 1.2020
+  [Client 2] Evaluate Reward: R_i = 5.46% (572/10477)
+  [Client 3] Local Train: Avg Loss = 0.9720
+  [Client 3] Evaluate Reward: R_i = 31.59% (3472/10991)
+  [Client 0] Local Train: Avg Loss = 1.1629
+  [Client 0] Evaluate Reward: R_i = 4.87% (205/4208)
+  [Client 1] Local Train: Avg Loss = 0.9614
+  [Client 1] Evaluate Reward: R_i = 21.32% (3364/15781)
+  [Client 2] Local Train: Avg Loss = 1.1898
+  [Client 2] Evaluate Reward: R_i = 4.08% (427/10477)
+  [Client 3] Local Train: Avg Loss = 0.9608
+  [Client 3] Evaluate Reward: R_i = 14.90% (1638/10991)
+  [Client 0] Local Train: Avg Loss = 1.1478
+  [Client 0] Evaluate Reward: R_i = 4.35% (183/4208)
+  [Client 1] Local Train: Avg Loss = 0.9559
+  [Client 1] Evaluate Reward: R_i = 21.59% (3407/15781)
+  [Client 2] Local Train: Avg Loss = 1.1780
+  [Client 2] Evaluate Reward: R_i = 4.54% (476/10477)
+  [Client 3] Local Train: Avg Loss = 0.9536
+  [Client 3] Evaluate Reward: R_i = 13.15% (1445/10991)
+  [Client 0] Local Train: Avg Loss = 1.1350
+  [Client 0] Evaluate Reward: R_i = 6.61% (278/4208)
+  [Client 1] Local Train: Avg Loss = 0.9462
+  [Client 1] Evaluate Reward: R_i = 23.09% (3644/15781)
+  [Client 2] Local Train: Avg Loss = 1.1695
+  [Client 2] Evaluate Reward: R_i = 3.13% (328/10477)
+  [Client 3] Local Train: Avg Loss = 0.9415
+  [Client 3] Evaluate Reward: R_i = 9.56% (1051/10991)
+  [Client 0] Local Train: Avg Loss = 1.1211
+  [Client 0] Evaluate Reward: R_i = 4.23% (178/4208)
+  [Client 1] Local Train: Avg Loss = 0.9421
+  [Client 1] Evaluate Reward: R_i = 26.33% (4155/15781)
+  [Client 2] Local Train: Avg Loss = 1.1566
+  [Client 2] Evaluate Reward: R_i = 5.20% (545/10477)
+  [Client 3] Local Train: Avg Loss = 0.9350
+  [Client 3] Evaluate Reward: R_i = 18.31% (2013/10991)
+[Validate] Client 3 除外: Acc_sim_i = 7.1200% -> Delta_i = 4.5200%
+
+[Validate] (5/5) Client 4 を除外して再学習...
+  [Client 0] Local Train: Avg Loss = 1.8062
+  [Client 0] Evaluate Reward: R_i = 0.40% (17/4208)
+  [Client 1] Local Train: Avg Loss = 1.5996
+  [Client 1] Evaluate Reward: R_i = 4.21% (665/15781)
+  [Client 2] Local Train: Avg Loss = 1.8101
+  [Client 2] Evaluate Reward: R_i = 1.28% (134/10477)
+  [Client 3] Local Train: Avg Loss = 1.2956
+  [Client 3] Evaluate Reward: R_i = 4.88% (417/8543)
+  [Client 0] Local Train: Avg Loss = 1.5705
+  [Client 0] Evaluate Reward: R_i = 0.17% (7/4208)
+  [Client 1] Local Train: Avg Loss = 1.3198
+  [Client 1] Evaluate Reward: R_i = 26.71% (4215/15781)
+  [Client 2] Local Train: Avg Loss = 1.6182
+  [Client 2] Evaluate Reward: R_i = 0.72% (75/10477)
+  [Client 3] Local Train: Avg Loss = 1.0262
+  [Client 3] Evaluate Reward: R_i = 7.19% (614/8543)
+  [Client 0] Local Train: Avg Loss = 1.5089
+  [Client 0] Evaluate Reward: R_i = 7.22% (304/4208)
+  [Client 1] Local Train: Avg Loss = 1.2038
+  [Client 1] Evaluate Reward: R_i = 26.75% (4222/15781)
+  [Client 2] Local Train: Avg Loss = 1.5162
+  [Client 2] Evaluate Reward: R_i = 0.48% (50/10477)
+  [Client 3] Local Train: Avg Loss = 0.9444
+  [Client 3] Evaluate Reward: R_i = 5.48% (468/8543)
+  [Client 0] Local Train: Avg Loss = 1.4676
+  [Client 0] Evaluate Reward: R_i = 1.45% (61/4208)
+  [Client 1] Local Train: Avg Loss = 1.1346
+  [Client 1] Evaluate Reward: R_i = 33.07% (5218/15781)
+  [Client 2] Local Train: Avg Loss = 1.4465
+  [Client 2] Evaluate Reward: R_i = 10.25% (1074/10477)
+  [Client 3] Local Train: Avg Loss = 0.8893
+  [Client 3] Evaluate Reward: R_i = 2.82% (241/8543)
+  [Client 0] Local Train: Avg Loss = 1.4343
+  [Client 0] Evaluate Reward: R_i = 1.33% (56/4208)
+  [Client 1] Local Train: Avg Loss = 1.0875
+  [Client 1] Evaluate Reward: R_i = 10.83% (1709/15781)
+  [Client 2] Local Train: Avg Loss = 1.3929
+  [Client 2] Evaluate Reward: R_i = 1.86% (195/10477)
+  [Client 3] Local Train: Avg Loss = 0.8474
+  [Client 3] Evaluate Reward: R_i = 0.87% (74/8543)
+  [Client 0] Local Train: Avg Loss = 1.4043
+  [Client 0] Evaluate Reward: R_i = 1.50% (63/4208)
+  [Client 1] Local Train: Avg Loss = 1.0534
+  [Client 1] Evaluate Reward: R_i = 14.95% (2359/15781)
+  [Client 2] Local Train: Avg Loss = 1.3488
+  [Client 2] Evaluate Reward: R_i = 1.90% (199/10477)
+  [Client 3] Local Train: Avg Loss = 0.8116
+  [Client 3] Evaluate Reward: R_i = 0.87% (74/8543)
+  [Client 0] Local Train: Avg Loss = 1.3744
+  [Client 0] Evaluate Reward: R_i = 2.09% (88/4208)
+  [Client 1] Local Train: Avg Loss = 1.0258
+  [Client 1] Evaluate Reward: R_i = 18.63% (2940/15781)
+  [Client 2] Local Train: Avg Loss = 1.3144
+  [Client 2] Evaluate Reward: R_i = 1.50% (157/10477)
+  [Client 3] Local Train: Avg Loss = 0.7813
+  [Client 3] Evaluate Reward: R_i = 0.88% (75/8543)
+  [Client 0] Local Train: Avg Loss = 1.3451
+  [Client 0] Evaluate Reward: R_i = 1.57% (66/4208)
+  [Client 1] Local Train: Avg Loss = 1.0049
+  [Client 1] Evaluate Reward: R_i = 11.10% (1751/15781)
+  [Client 2] Local Train: Avg Loss = 1.2855
+  [Client 2] Evaluate Reward: R_i = 6.32% (662/10477)
+  [Client 3] Local Train: Avg Loss = 0.7540
+  [Client 3] Evaluate Reward: R_i = 0.66% (56/8543)
+  [Client 0] Local Train: Avg Loss = 1.3143
+  [Client 0] Evaluate Reward: R_i = 1.73% (73/4208)
+  [Client 1] Local Train: Avg Loss = 0.9862
+  [Client 1] Evaluate Reward: R_i = 17.45% (2753/15781)
+  [Client 2] Local Train: Avg Loss = 1.2581
+  [Client 2] Evaluate Reward: R_i = 4.28% (448/10477)
+  [Client 3] Local Train: Avg Loss = 0.7303
+  [Client 3] Evaluate Reward: R_i = 0.52% (44/8543)
+  [Client 0] Local Train: Avg Loss = 1.2887
+  [Client 0] Evaluate Reward: R_i = 1.71% (72/4208)
+  [Client 1] Local Train: Avg Loss = 0.9697
+  [Client 1] Evaluate Reward: R_i = 19.37% (3057/15781)
+  [Client 2] Local Train: Avg Loss = 1.2340
+  [Client 2] Evaluate Reward: R_i = 2.31% (242/10477)
+  [Client 3] Local Train: Avg Loss = 0.7087
+  [Client 3] Evaluate Reward: R_i = 0.78% (67/8543)
+  [Client 0] Local Train: Avg Loss = 1.2620
+  [Client 0] Evaluate Reward: R_i = 2.09% (88/4208)
+  [Client 1] Local Train: Avg Loss = 0.9558
+  [Client 1] Evaluate Reward: R_i = 20.62% (3254/15781)
+  [Client 2] Local Train: Avg Loss = 1.2142
+  [Client 2] Evaluate Reward: R_i = 0.38% (40/10477)
+  [Client 3] Local Train: Avg Loss = 0.6889
+  [Client 3] Evaluate Reward: R_i = 0.67% (57/8543)
+  [Client 0] Local Train: Avg Loss = 1.2377
+  [Client 0] Evaluate Reward: R_i = 2.07% (87/4208)
+  [Client 1] Local Train: Avg Loss = 0.9411
+  [Client 1] Evaluate Reward: R_i = 25.98% (4100/15781)
+  [Client 2] Local Train: Avg Loss = 1.1954
+  [Client 2] Evaluate Reward: R_i = 0.37% (39/10477)
+  [Client 3] Local Train: Avg Loss = 0.6713
+  [Client 3] Evaluate Reward: R_i = 0.64% (55/8543)
+  [Client 0] Local Train: Avg Loss = 1.2148
+  [Client 0] Evaluate Reward: R_i = 2.21% (93/4208)
+  [Client 1] Local Train: Avg Loss = 0.9316
+  [Client 1] Evaluate Reward: R_i = 22.74% (3589/15781)
+  [Client 2] Local Train: Avg Loss = 1.1783
+  [Client 2] Evaluate Reward: R_i = 0.47% (49/10477)
+  [Client 3] Local Train: Avg Loss = 0.6553
+  [Client 3] Evaluate Reward: R_i = 0.64% (55/8543)
+  [Client 0] Local Train: Avg Loss = 1.1926
+  [Client 0] Evaluate Reward: R_i = 2.85% (120/4208)
+  [Client 1] Local Train: Avg Loss = 0.9206
+  [Client 1] Evaluate Reward: R_i = 18.57% (2930/15781)
+  [Client 2] Local Train: Avg Loss = 1.1633
+  [Client 2] Evaluate Reward: R_i = 0.82% (86/10477)
+  [Client 3] Local Train: Avg Loss = 0.6397
+  [Client 3] Evaluate Reward: R_i = 0.60% (51/8543)
+  [Client 0] Local Train: Avg Loss = 1.1762
+  [Client 0] Evaluate Reward: R_i = 1.64% (69/4208)
+  [Client 1] Local Train: Avg Loss = 0.9086
+  [Client 1] Evaluate Reward: R_i = 21.80% (3441/15781)
+  [Client 2] Local Train: Avg Loss = 1.1472
+  [Client 2] Evaluate Reward: R_i = 0.68% (71/10477)
+  [Client 3] Local Train: Avg Loss = 0.6263
+  [Client 3] Evaluate Reward: R_i = 0.59% (50/8543)
+  [Client 0] Local Train: Avg Loss = 1.1602
+  [Client 0] Evaluate Reward: R_i = 1.31% (55/4208)
+  [Client 1] Local Train: Avg Loss = 0.9015
+  [Client 1] Evaluate Reward: R_i = 22.78% (3595/15781)
+  [Client 2] Local Train: Avg Loss = 1.1323
+  [Client 2] Evaluate Reward: R_i = 1.05% (110/10477)
+  [Client 3] Local Train: Avg Loss = 0.6121
+  [Client 3] Evaluate Reward: R_i = 0.70% (60/8543)
+  [Client 0] Local Train: Avg Loss = 1.1399
+  [Client 0] Evaluate Reward: R_i = 1.50% (63/4208)
+  [Client 1] Local Train: Avg Loss = 0.8921
+  [Client 1] Evaluate Reward: R_i = 27.08% (4273/15781)
+  [Client 2] Local Train: Avg Loss = 1.1200
+  [Client 2] Evaluate Reward: R_i = 1.47% (154/10477)
+  [Client 3] Local Train: Avg Loss = 0.5992
+  [Client 3] Evaluate Reward: R_i = 0.96% (82/8543)
+  [Client 0] Local Train: Avg Loss = 1.1218
+  [Client 0] Evaluate Reward: R_i = 8.25% (347/4208)
+  [Client 1] Local Train: Avg Loss = 0.8846
+  [Client 1] Evaluate Reward: R_i = 28.97% (4571/15781)
+  [Client 2] Local Train: Avg Loss = 1.1080
+  [Client 2] Evaluate Reward: R_i = 0.83% (87/10477)
+  [Client 3] Local Train: Avg Loss = 0.5880
+  [Client 3] Evaluate Reward: R_i = 3.27% (279/8543)
+  [Client 0] Local Train: Avg Loss = 1.1051
+  [Client 0] Evaluate Reward: R_i = 2.57% (108/4208)
+  [Client 1] Local Train: Avg Loss = 0.8774
+  [Client 1] Evaluate Reward: R_i = 26.91% (4246/15781)
+  [Client 2] Local Train: Avg Loss = 1.0942
+  [Client 2] Evaluate Reward: R_i = 1.85% (194/10477)
+  [Client 3] Local Train: Avg Loss = 0.5784
+  [Client 3] Evaluate Reward: R_i = 2.41% (206/8543)
+  [Client 0] Local Train: Avg Loss = 1.0908
+  [Client 0] Evaluate Reward: R_i = 2.28% (96/4208)
+  [Client 1] Local Train: Avg Loss = 0.8666
+  [Client 1] Evaluate Reward: R_i = 26.92% (4249/15781)
+  [Client 2] Local Train: Avg Loss = 1.0838
+  [Client 2] Evaluate Reward: R_i = 1.92% (201/10477)
+  [Client 3] Local Train: Avg Loss = 0.5684
+  [Client 3] Evaluate Reward: R_i = 2.40% (205/8543)
+[Validate] Client 4 除外: Acc_sim_i = 9.5500% -> Delta_i = 2.0900%
+
+[Validate] 貢献度(Delta)の計算完了 (所要時間: 3397.99 秒)
+
+========================================
+--- Shapley値 妥当性検証結果 ---
+========================================
+Client ID  | Phi (算出値)       | Delta (実測値)    
+--------------------------------------------
+0          | 2.7400          | 1.9200         
+1          | -1.2240         | 0.6200         
+2          | 2.3270          | 3.5300         
+3          | 1.1025          | 4.5200         
+4          | 2.5745          | 2.0900         
+--------------------------------------------
+
+[相関分析結果]
+ピアソン相関係数 (r)   : 0.4000 (p-value: 0.5047)
+スピアマン相関係数 (rho) : 0.0000 (p-value: 1.0000)
+
+[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。
