@@ -8,6 +8,7 @@ import numpy as np
 import copy
 import time
 import random
+import json
 import yaml # ★ config.yml 読み込みに必要
 from scipy.stats import pearsonr, spearmanr # 検証用にインポート
 
