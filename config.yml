@@ -11,7 +11,7 @@ rank: 4              # LoRAのランク(r)
 
 # --- Server SPSA Settings ---
 spsa_epsilon: 0.1    # SPSAの摂動の大きさ (epsilon)
-spsa_eta_b: 0.01     # B_server の学習率 (eta_B)
+spsa_eta_b: 0.0001   # B_server の学習率 (eta_B)
 
 # --- Validation Settings ---
 # TMC (Truncated Monte Carlo) 近似法のためのイテレーション回数
