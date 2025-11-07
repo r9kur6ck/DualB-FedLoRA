@@ -294,14 +294,14 @@ class ShapleyComputeServer:
             corr, p_val = spearmanr(phi_values, c_values)
             
             print("\n[相関分析結果]")
-            print(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})") [cite: 144]
+            print(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})") 
             
             if corr > 0.8:
-                print("\n[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。") [cite: 163]
+                print("\n[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。") 
             elif corr > 0.5:
                  print("\n[結論] 正の相関が見られますが、基準 (rho > 0.8) には達していません。")
             else:
-                print("\n[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。") [cite: 163]
+                print("\n[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。") 
 
 
     def evaluate_global_model(self):
