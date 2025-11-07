@@ -235,7 +235,7 @@ def run_main_training(config, all_datasets):
     
     base_model = SimpleCNN(rank=config['rank'])
     base_model.eval() 
-    for param in base_model.parameters(): param.requires_grad = False
+    for param_group in base_model.parameters(): param_group['params'].requires_grad = False
     
     server = ShapleyComputeServer(base_model, rank=config['rank'], test_loader=test_loader)
 
@@ -243,7 +243,7 @@ def run_main_training(config, all_datasets):
     actual_num_clients = len(client_dataloaders)
     for i in range(actual_num_clients):
         local_model = copy.deepcopy(base_model)
-        for param in local_model.get_lora_parameters(): param.requires_grad = True
+        for param_group in local_model.get_lora_parameters(): param_group['params'].requires_grad = True
         clients.append(Client(i, client_dataloaders[i], local_model))
     
     print(f"[Main] {len(clients)} クライアントの初期化完了。")
@@ -355,7 +355,7 @@ def run_training_for_validation(
     clients = []
     for i, client_id in enumerate(client_ids_to_use):
         local_model = copy.deepcopy(base_model)
-        for param in local_model.get_lora_parameters(): param.requires_grad = True
+        for param_group in local_model.get_lora_parameters(): param_group['params'].requires_grad = True
         clients.append(Client(i, participant_dataloaders[i], local_model))
 
     for t in range(config['num_rounds']):
