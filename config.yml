@@ -18,4 +18,4 @@ spsa_eta_b: 0.01     # B_server の学習率 (eta_B)
 shapley_tmc_iterations: 20
 
 # --- Evaluation Settings ---
-eval_interval: 5     # テスト評価の間隔 
+eval_interval: 1     # テスト評価の間隔 
