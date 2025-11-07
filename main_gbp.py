@@ -11,10 +11,42 @@ import random
 import yaml # config.yml 読み込みに必要
 from scipy.stats import pearsonr, spearmanr # 検証用にインポート
 import json # config表示用にインポート
+import logging # ★ ロギングモジュールをインポート
+import sys # ★ stdoutへの出力に必要
+
+# --- 0. ★ ロギング設定 ---
+def setup_logging(logfile='experiment.log'):
+    """
+    ログをコンソールとファイルの両方に出力するように設定する
+    """
+    # 既存のハンドラをすべて削除 (Jupyterなどで多重実行された場合のため)
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+        
+    # フォーマッタ (ログの形式)
+    # [2025-11-08 09:00:00,123] [INFO] - メッセージ
+    formatter = logging.Formatter(
+        '[%(asctime)s] [%(levelname)s] - %(message)s', 
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # ルートロガーを取得
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO) # INFOレベル以上のログをすべて記録
+
+    # 1. コンソールへのハンドラ
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    logger.addHandler(stdout_handler)
+
+    # 2. ファイルへのハンドラ (上書きモード 'w')
+    file_handler = logging.FileHandler(logfile, mode='w')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
 # --- 1. 共通: データセット準備 (Non-IID) ---
 def get_non_iid_data(num_clients, dataset, alpha=0.3):
-    print(f"[Data] Non-IIDデータ分割を開始 (Alpha={alpha})...")
+    logging.info(f"[Data] Non-IIDデータ分割を開始 (Alpha={alpha})...")
     targets = np.array(dataset.targets)
     num_classes = len(np.unique(targets))
     client_indices = [[] for _ in range(num_clients)]
@@ -36,7 +68,7 @@ def get_non_iid_data(num_clients, dataset, alpha=0.3):
         subset = Subset(dataset, indices)
         loader = DataLoader(subset, batch_size=32, shuffle=True)
         client_dataloaders.append(loader)
-    print(f"[Data] {len(client_dataloaders)} クライアント分のデータローダーを作成完了。")
+    logging.info(f"[Data] {len(client_dataloaders)} クライアント分のデータローダーを作成完了。")
     return client_dataloaders
 
 # --- 2. 共通: モデルとLoRAレイヤーの定義 ---
@@ -84,37 +116,31 @@ class Client:
         self.criterion = nn.CrossEntropyLoss()
         self.device = device
 
-    # ★ 修正: 勾配 g_A_i を返すように変更 [cite: 105]
     def local_train(self, local_epochs=1):
         self.model.train()
         total_loss, total_batches = 0.0, 0
-        g_A_i = None # 最後に使った勾配を保存する
+        g_A_i = None 
         
         for epoch in range(local_epochs):
             epoch_loss, epoch_batches = 0.0, 0
             for data, target in self.dataloader:
                 data, target = data.to(self.device), target.to(self.device)
-                
                 self.optimizer.zero_grad()
                 output = self.model(data, b_server_fc1=None) 
                 loss = self.criterion(output, target)
                 loss.backward()
                 
-                # ★ 勾配を保存 (LoRA A の勾配) [cite: 30, 98]
-                # .grad はオプティマイザがステップすると消えるため、ステップ直前にクローンする
-                g_A_i = self.model.lora_fc1.A.grad.clone().detach() 
+                if self.model.lora_fc1.A.grad is not None:
+                    g_A_i = self.model.lora_fc1.A.grad.clone().detach() 
                 
                 self.optimizer.step()
-                
                 epoch_loss += loss.item()
                 epoch_batches += 1
             total_loss += epoch_loss
             total_batches += epoch_batches
             
         avg_loss = total_loss / total_batches if total_batches > 0 else 0
-        print(f"  [Client {self.client_id}] Local Train: Avg Loss = {avg_loss:.4f}")
-        
-        # ★ 最後のバッチの勾配を辞書形式で返す
+        logging.info(f"  [Client {self.client_id}] Local Train: Avg Loss = {avg_loss:.4f}")
         return {'A_fc1': g_A_i}
 
     def evaluate_reward(self, b_server_state):
@@ -129,7 +155,7 @@ class Client:
                 total += len(target)
         avg_accuracy = 100. * correct / total if total > 0 else 0
         R_i = avg_accuracy 
-        print(f"  [Client {self.client_id}] Evaluate Reward: R_i = {R_i:.2f}% ({correct}/{total})")
+        logging.info(f"  [Client {self.client_id}] Evaluate Reward: R_i = {R_i:.2f}% ({correct}/{total})")
         A_i_state = self.model.get_lora_state()
         return A_i_state, R_i
 
@@ -143,11 +169,8 @@ class ShapleyComputeServer:
         self.base_model, self.test_loader = base_model, test_loader
         self.v_cache, self.final_shapley_values = {}, {}
         self.device = device
-        
-        # ★ 追加: Gradient-based Proxy 用のストレージ [cite: 88]
         self.all_Gradients = {}
-        
-        print("[Server] Shapley値計算サーバを初期化しました。")
+        logging.info("[Server] Shapley値計算サーバを初期化しました。")
 
     def generate_spsa_perturbation(self, epsilon):
         k, r = self.B_server_state['B_server_fc1'].shape
@@ -157,7 +180,6 @@ class ShapleyComputeServer:
         B_minus_fc1 = self.B_server_state['B_server_fc1'] - epsilon * delta_fc1
         return {'B_server_fc1': B_plus_fc1}, {'B_server_fc1': B_minus_fc1}
 
-    # ★ 修正: Gradient Proxy 検証ロジックを追加
     def aggregate_and_update(self, client_groups, epsilon, eta_B_server, compute_shapley_round, mc_iterations):
         R_plus_list = [r for client_id, r in self.all_Rewards.items() if client_id in client_groups['plus']]
         R_minus_list = [r for client_id, r in self.all_Rewards.items() if client_id in client_groups['minus']]
@@ -172,14 +194,13 @@ class ShapleyComputeServer:
         with torch.no_grad():
             self.B_server_state['B_server_fc1'].add_(eta_B_server * g_hat_fc1)
         
-        print(f"         [Server] SPSA Update: R+={R_plus:.2f}, R-={R_minus:.2f}, GradFactor={grad_factor:.4f}")
+        logging.info(f"         [Server] SPSA Update: R+={R_plus:.2f}, R-={R_minus:.2f}, GradFactor={grad_factor:.4f}")
         
-        # 最終ラウンドで Shapley値の計算 と Proxy検証 を実行
         if compute_shapley_round:
-            print("\n[Server] Shapley値 (TMC) の計算を開始...")
+            logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
             self.compute_shapley_tmc(self.all_A_states, self.B_server_state, mc_iterations=mc_iterations)
             
-            print("\n[Server] Gradient-based Proxy Validation を開始...")
+            logging.info("\n[Server] Gradient-based Proxy Validation を開始...")
             self.run_gradient_proxy_validation()
         
         self.v_cache.clear()
@@ -194,7 +215,6 @@ class ShapleyComputeServer:
 
         A_states_in_S = [self.all_A_states[cid]['A_fc1'] for cid in coalition_client_ids]
         A_S_fc1 = torch.stack(A_states_in_S).mean(dim=0) 
-        
         eval_model = copy.deepcopy(self.base_model)
         eval_model.lora_fc1.A.data = A_S_fc1
         eval_model.eval()
@@ -209,7 +229,7 @@ class ShapleyComputeServer:
         
         v_s_accuracy = 100. * correct / total if total > 0 else 0
         self.v_cache[coalition_tuple] = v_s_accuracy
-        print(f"           [Shapley] V(S={list(coalition_tuple)}) = {v_s_accuracy:.4f}%")
+        logging.info(f"           [Shapley] V(S={list(coalition_tuple)}) = {v_s_accuracy:.4f}%")
         return v_s_accuracy
 
     def compute_shapley_tmc(self, all_A_states, b_server_state, mc_iterations=20):
@@ -218,7 +238,7 @@ class ShapleyComputeServer:
         if num_clients == 0: return
         shapley_values = {cid: 0.0 for cid in client_ids}
         
-        print(f"           [Shapley] TMC-Shapley (T={mc_iterations}) 開始...")
+        logging.info(f"           [Shapley] TMC-Shapley (T={mc_iterations}) 開始...")
         for t in range(mc_iterations):
             random.shuffle(client_ids)
             coalition, v_s_prev = [], self.evaluate_coalition([], b_server_state)
@@ -229,84 +249,70 @@ class ShapleyComputeServer:
                 shapley_values[client_id] += marginal_contribution
                 v_s_prev = v_s_curr
         
-        print("[Server] Shapley Values (TMC) 算出完了:")
+        logging.info("[Server] Shapley Values (TMC) 算出完了:")
         for client_id in shapley_values:
             shapley_values[client_id] /= mc_iterations
-            print(f"         Client {client_id}: phi = {shapley_values[client_id]:.4f}")
+            logging.info(f"         Client {client_id}: phi = {shapley_values[client_id]:.4f}")
         self.final_shapley_values = shapley_values
 
-    # ★ 新規追加: Gradient-based Proxy 検証ロジック [cite: 127-146]
     def run_gradient_proxy_validation(self):
-        
         if not self.all_Gradients:
-            print("[Proxy Validation] Error: 検証用の勾配がありません。")
+            logging.error("[Proxy Validation] Error: 検証用の勾配がありません。")
             return
         if not self.final_shapley_values:
-            print("[Proxy Validation] Error: 比較対象のShapley値がありません。")
+            logging.error("[Proxy Validation] Error: 比較対象のShapley値がありません。")
             return
 
-        # 1. g_global の計算 [cite: 134]
-        # (A_fc1 の勾配のみ)
-        # 勾配が None (学習データが0) のクライアントを除外
         all_g_A_i = [g['A_fc1'] for g in self.all_Gradients.values() if g['A_fc1'] is not None]
-        
         if not all_g_A_i:
-            print("[Proxy Validation] Error: 有効な勾配がありません。")
+            logging.error("[Proxy Validation] Error: 有効な勾配がありません。")
             return
             
         g_global_A = torch.stack(all_g_A_i).mean(dim=0)
         
-        # 2. C_i の計算 (内積) [cite: 136]
         proxy_scores_C_i = {}
-        print("[Proxy Validation] 各クライアントの勾配貢献度 (C_i) を計算:")
+        logging.info("[Proxy Validation] 各クライアントの勾配貢献度 (C_i) を計算:")
         for client_id, g_dict in self.all_Gradients.items():
             if g_dict['A_fc1'] is not None:
                 g_A_i = g_dict['A_fc1']
-                # 内積: <g_i, g_global>. flatten() して1Dベクトルにする
                 c_i = torch.dot(g_A_i.flatten(), g_global_A.flatten()).item()
                 proxy_scores_C_i[client_id] = c_i
-                print(f"         Client {client_id}: C_i = {c_i:.4e}")
+                logging.info(f"         Client {client_id}: C_i = {c_i:.4e}")
         
-        # 3. 相関の計算 [cite: 144, 156]
         phi_values, c_values, client_ids = [], [], []
-        
-        # ID 0, 1, 2... の順で並べる
         sorted_client_ids = sorted(self.final_shapley_values.keys())
         for cid in sorted_client_ids:
-            if cid in proxy_scores_C_i: # 勾配とShapley値の両方があるものだけ
+            if cid in proxy_scores_C_i:
                 client_ids.append(cid)
                 phi_values.append(self.final_shapley_values[cid])
                 c_values.append(proxy_scores_C_i[cid])
         
-        print("\n" + "=" * 40)
-        print("--- Gradient-based Proxy 検証結果 ---")
-        print("=" * 40)
-        print(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'C_i (Proxyスコア)':<17}")
-        print("-" * 48)
+        logging.info("\n" + "=" * 40)
+        logging.info("--- Gradient-based Proxy 検証結果 ---")
+        logging.info("=" * 40)
+        logging.info(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'C_i (Proxyスコア)':<17}")
+        logging.info("-" * 48)
         for i in range(len(client_ids)):
-            print(f"{client_ids[i]:<10} | {phi_values[i]:<17.4f} | {c_values[i]:<17.4e}")
-        print("-" * 48)
+            logging.info(f"{client_ids[i]:<10} | {phi_values[i]:<17.4f} | {c_values[i]:<17.4e}")
+        logging.info("-" * 48)
         
         if len(phi_values) < 2 or np.std(phi_values) == 0 or np.std(c_values) == 0:
-            print("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
+            logging.warning("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
         else:
-            # PDF [cite: 35, 144] に従い Spearman 相関を使用
             corr, p_val = spearmanr(phi_values, c_values)
-            
-            print("\n[相関分析結果]")
-            print(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})") 
+            logging.info("\n[相関分析結果]")
+            logging.info(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})")
             
             if corr > 0.8:
-                print("\n[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。") 
+                logging.info("\n[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。")
             elif corr > 0.5:
-                 print("\n[結論] 正の相関が見られますが、基準 (rho > 0.8) には達していません。")
+                 logging.info("\n[結論] 正の相関が見られますが、基準 (rho > 0.8) には達していません。")
             else:
-                print("\n[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。") 
-
+                logging.info("\n[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。")
 
     def evaluate_global_model(self):
         if not self.all_A_states: 
-            print("[Warning] 評価するA行列がありません。")
+            logging.warning("[Warning] 評価するA行列がありません。")
             return 0.0
         A_states_all = [s['A_fc1'] for s in self.all_A_states.values()]
         A_global_fc1 = torch.stack(A_states_all).mean(dim=0)
@@ -326,13 +332,13 @@ class ShapleyComputeServer:
 
     def clear_round_data(self):
         self.all_A_states, self.all_Rewards = {}, {}
-        self.all_Gradients = {} # ★ 追加
+        self.all_Gradients = {}
 
 # --- 5. [パート1] メイン学習 実行関数 ---
 def run_main_training(config, all_datasets):
-    print(f"--- [パート1] Dual-B FedLoRA (SPSA) 学習開始 ---")
-    print(f"Clients: {config['num_clients']}, Rounds: {config['num_rounds']}, Rank: {config['rank']}")
-    print("-" * 30)
+    logging.info(f"--- [パート1] Dual-B FedLoRA (SPSA) 学習開始 ---")
+    logging.info(f"Clients: {config['num_clients']}, Rounds: {config['num_rounds']}, Rank: {config['rank']}")
+    logging.info("-" * 30)
 
     device = all_datasets['device']
     client_dataloaders = all_datasets['client_dataloaders']
@@ -353,15 +359,15 @@ def run_main_training(config, all_datasets):
             param_group['params'].requires_grad = True
         clients.append(Client(i, client_dataloaders[i], local_model, device=device))
     
-    print(f"[Main] {len(clients)} クライアントの初期化完了。")
-    print("-" * 30)
+    logging.info(f"[Main] {len(clients)} クライアントの初期化完了。")
+    logging.info("-" * 30)
 
     start_time = time.time()
     eval_interval = config.get('eval_interval', 5)
-    print(f"[Main] グローバルテスト精度を {eval_interval} ラウンドごとに計算します。")
+    logging.info(f"[Main] グローバルテスト精度を {eval_interval} ラウンドごとに計算します。")
     
     for t in range(config['num_rounds']):
-        print(f"\n--- Round {t+1}/{config['num_rounds']} ---")
+        logging.info(f"\n--- Round {t+1}/{config['num_rounds']} ---")
         server.clear_round_data()
         B_plus, B_minus = server.generate_spsa_perturbation(epsilon=config['spsa_epsilon'])
         
@@ -373,18 +379,13 @@ def run_main_training(config, all_datasets):
 
         for i in range(actual_num_clients):
             client = clients[i]
-            
-            # ★ 修正: g_A_i を受け取る [cite: 105]
             g_A_i = client.local_train(local_epochs=config['local_epochs'])
-            
             if i in client_groups['plus']: b_to_evaluate = B_plus
             else: b_to_evaluate = B_minus
-                
             A_i_state, R_i = client.evaluate_reward(b_to_evaluate)
-            
             server.all_A_states[i] = A_i_state
             server.all_Rewards[i] = R_i
-            server.all_Gradients[i] = g_A_i # ★ 追加: 勾配をサーバに保存 [cite: 129]
+            server.all_Gradients[i] = g_A_i
 
         compute_shapley_round = (t + 1) == config['num_rounds']
         
@@ -395,48 +396,48 @@ def run_main_training(config, all_datasets):
             compute_shapley_round,
             mc_iterations=config.get('shapley_tmc_iterations', 20)
         )
-        print(f"         [Server] Round {t+1} Avg Reward (All Clients): {avg_reward:.2f}%")
+        logging.info(f"         [Server] Round {t+1} Avg Reward (All Clients): {avg_reward:.2f}%")
 
         if (t + 1) % eval_interval == 0 or (t + 1) == config['num_rounds']:
-            print(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
+            logging.info(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
             current_test_accuracy = server.evaluate_global_model()
-            print(f"====== [Main] Round {t+1} Global Test Accuracy: {current_test_accuracy:.4f}% ======")
+            logging.info(f"====== [Main] Round {t+1} Global Test Accuracy: {current_test_accuracy:.4f}% ======")
 
     total_time = time.time() - start_time
-    print("-" * 30)
-    print(f"--- [パート1] 学習完了 --- (総所要時間: {total_time:.2f} 秒)")
+    logging.info("-" * 30)
+    logging.info(f"--- [パート1] 学習完了 --- (総所要時間: {total_time:.2f} 秒)")
     
-    # 最終的なShapley値を返す (検証は aggregate_and_update の中で実行済み)
     return server.final_shapley_values
 
 
-# --- 6. [パート2 削除] ---
-# ValidationServer, run_training_for_validation, run_validation_experiment
-# はすべて不要になったため削除
-
+# --- [パート2 は削除] ---
 
 # --- 9. 統合メイン実行ブロック ---
 if __name__ == "__main__":
+    
+    # ★ ログ設定を呼び出し
+    setup_logging(logfile='experiment.log')
     
     # --- ステップ0: config.yml の読み込み ---
     config_file = "config.yml"
     try:
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
-        print(f"[Main] {config_file} から設定をロードしました。")
-        print(json.dumps(config, indent=2))
+        logging.info(f"[Main] {config_file} から設定をロードしました。")
+        # ログファイルに見やすく出力
+        logging.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
     except FileNotFoundError:
-        print(f"[Error] {config_file} が見つかりません。")
+        logging.error(f"[Error] {config_file} が見つかりません。")
         exit()
     except Exception as e:
-        print(f"[Error] {config_file} の読み込みに失敗しました: {e}")
+        logging.error(f"[Error] {config_file} の読み込みに失敗しました: {e}")
         exit()
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"\n[Main] Using device: {device}")
+    logging.info(f"\n[Main] Using device: {device}")
     
     # --- 共通データセット準備 (1回だけ実行) ---
-    print("\n[Main] 共通データセットを準備します...")
+    logging.info("\n[Main] 共通データセットを準備します...")
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -445,14 +446,15 @@ if __name__ == "__main__":
         train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
         test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
     except Exception as e:
-        print(f"[Error] CIFAR-10データセットのダウンロードに失敗しました: {e}")
+        logging.error(f"[Error] CIFAR-10データセットのダウンロードに失敗しました: {e}")
         exit()
         
     client_dataloaders = get_non_iid_data(config['num_clients'], train_dataset, alpha=config['non_iid_alpha'])
-    test_loader = DataLoader(test_dataset, batch_size=128, num_workers=2, pin_memory=True) # GPU用に最適化
+    # GPU用に num_workers=2, pin_memory=True を追加
+    test_loader = DataLoader(test_dataset, batch_size=128, num_workers=2, pin_memory=True) 
     
     if len(client_dataloaders) != config['num_clients']:
-        print(f"[Main] Warning: データ割り当ての結果、クライアント数が {len(client_dataloaders)} になりました。")
+        logging.warning(f"[Main] Warning: データ割り当ての結果、クライアント数が {len(client_dataloaders)} になりました。")
         config['num_clients'] = len(client_dataloaders)
 
     all_datasets = {
@@ -464,7 +466,4 @@ if __name__ == "__main__":
     # --- ステップ1: メイン学習とShapley値・Proxy検証 ---
     final_shapley_values = run_main_training(config, all_datasets)
     
-    # --- ステップ2: 削除 ---
-    # (検証はパート1の最終ラウンドで実行されるため、ここでは何もする必要がない)
-    
-    print("\n[Main] すべての処理が完了しました。")
+    logging.info("\n[Main] すべての処理が完了しました。")

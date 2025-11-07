@@ -1,0 +1,407 @@
+[Main] グローバルテスト精度を 1 ラウンドごとに計算します。
+
+--- Round 1/20 ---
+  [Client 0] Local Train: Avg Loss = 1.8747
+  [Client 0] Evaluate Reward: R_i = 1.20% (95/7933)
+  [Client 1] Local Train: Avg Loss = 1.6000
+  [Client 1] Evaluate Reward: R_i = 19.52% (2498/12799)
+  [Client 2] Local Train: Avg Loss = 2.1457
+  [Client 2] Evaluate Reward: R_i = 9.23% (604/6542)
+  [Client 3] Local Train: Avg Loss = 1.6493
+  [Client 3] Evaluate Reward: R_i = 8.27% (743/8986)
+  [Client 4] Local Train: Avg Loss = 1.8767
+  [Client 4] Evaluate Reward: R_i = 26.83% (3686/13740)
+         [Server] SPSA Update: R+=18.03, R-=9.66, GradFactor=41.8434
+         [Server] Round 1 Avg Reward (All Clients): 13.01%
+
+[Main] Round 1: グローバルテスト精度を計算中...
+====== [Main] Round 1 Global Test Accuracy: 10.3100% ======
+
+--- Round 2/20 ---
+  [Client 0] Local Train: Avg Loss = 1.6441
+  [Client 0] Evaluate Reward: R_i = 3.18% (252/7933)
+  [Client 1] Local Train: Avg Loss = 1.3101
+  [Client 1] Evaluate Reward: R_i = 19.98% (2557/12799)
+  [Client 2] Local Train: Avg Loss = 1.9464
+  [Client 2] Evaluate Reward: R_i = 5.23% (342/6542)
+  [Client 3] Local Train: Avg Loss = 1.3999
+  [Client 3] Evaluate Reward: R_i = 2.34% (210/8986)
+  [Client 4] Local Train: Avg Loss = 1.6592
+  [Client 4] Evaluate Reward: R_i = 24.80% (3408/13740)
+         [Server] SPSA Update: R+=11.58, R-=10.79, GradFactor=3.9398
+         [Server] Round 2 Avg Reward (All Clients): 11.10%
+
+[Main] Round 2: グローバルテスト精度を計算中...
+====== [Main] Round 2 Global Test Accuracy: 10.7700% ======
+
+--- Round 3/20 ---
+  [Client 0] Local Train: Avg Loss = 1.5522
+  [Client 0] Evaluate Reward: R_i = 1.07% (85/7933)
+  [Client 1] Local Train: Avg Loss = 1.2055
+  [Client 1] Evaluate Reward: R_i = 15.46% (1979/12799)
+  [Client 2] Local Train: Avg Loss = 1.8232
+  [Client 2] Evaluate Reward: R_i = 8.32% (544/6542)
+  [Client 3] Local Train: Avg Loss = 1.2851
+  [Client 3] Evaluate Reward: R_i = 1.06% (95/8986)
+  [Client 4] Local Train: Avg Loss = 1.5463
+  [Client 4] Evaluate Reward: R_i = 22.02% (3026/13740)
+         [Server] SPSA Update: R+=15.17, R-=5.86, GradFactor=46.5289
+         [Server] Round 3 Avg Reward (All Clients): 9.59%
+
+[Main] Round 3: グローバルテスト精度を計算中...
+====== [Main] Round 3 Global Test Accuracy: 10.2100% ======
+
+--- Round 4/20 ---
+  [Client 0] Local Train: Avg Loss = 1.4846
+  [Client 0] Evaluate Reward: R_i = 2.22% (176/7933)
+  [Client 1] Local Train: Avg Loss = 1.1336
+  [Client 1] Evaluate Reward: R_i = 16.74% (2142/12799)
+  [Client 2] Local Train: Avg Loss = 1.7514
+  [Client 2] Evaluate Reward: R_i = 5.40% (353/6542)
+  [Client 3] Local Train: Avg Loss = 1.2120
+  [Client 3] Evaluate Reward: R_i = 11.68% (1050/8986)
+  [Client 4] Local Train: Avg Loss = 1.4627
+  [Client 4] Evaluate Reward: R_i = 19.18% (2636/13740)
+         [Server] SPSA Update: R+=6.95, R-=13.77, GradFactor=-34.1022
+         [Server] Round 4 Avg Reward (All Clients): 11.04%
+
+[Main] Round 4: グローバルテスト精度を計算中...
+====== [Main] Round 4 Global Test Accuracy: 10.7700% ======
+
+--- Round 5/20 ---
+  [Client 0] Local Train: Avg Loss = 1.4320
+  [Client 0] Evaluate Reward: R_i = 5.23% (415/7933)
+  [Client 1] Local Train: Avg Loss = 1.0794
+  [Client 1] Evaluate Reward: R_i = 16.70% (2137/12799)
+  [Client 2] Local Train: Avg Loss = 1.6955
+  [Client 2] Evaluate Reward: R_i = 5.92% (387/6542)
+  [Client 3] Local Train: Avg Loss = 1.1603
+  [Client 3] Evaluate Reward: R_i = 2.72% (244/8986)
+  [Client 4] Local Train: Avg Loss = 1.4025
+  [Client 4] Evaluate Reward: R_i = 23.90% (3284/13740)
+         [Server] SPSA Update: R+=9.71, R-=11.68, GradFactor=-9.8834
+         [Server] Round 5 Avg Reward (All Clients): 10.89%
+
+[Main] Round 5: グローバルテスト精度を計算中...
+====== [Main] Round 5 Global Test Accuracy: 10.9600% ======
+
+--- Round 6/20 ---
+  [Client 0] Local Train: Avg Loss = 1.3905
+  [Client 0] Evaluate Reward: R_i = 12.27% (973/7933)
+  [Client 1] Local Train: Avg Loss = 1.0394
+  [Client 1] Evaluate Reward: R_i = 15.13% (1936/12799)
+  [Client 2] Local Train: Avg Loss = 1.6465
+  [Client 2] Evaluate Reward: R_i = 6.53% (427/6542)
+  [Client 3] Local Train: Avg Loss = 1.1237
+  [Client 3] Evaluate Reward: R_i = 2.98% (268/8986)
+  [Client 4] Local Train: Avg Loss = 1.3583
+  [Client 4] Evaluate Reward: R_i = 19.91% (2735/13740)
+         [Server] SPSA Update: R+=13.22, R-=10.12, GradFactor=15.4581
+         [Server] Round 6 Avg Reward (All Clients): 11.36%
+
+[Main] Round 6: グローバルテスト精度を計算中...
+====== [Main] Round 6 Global Test Accuracy: 10.3700% ======
+
+--- Round 7/20 ---
+  [Client 0] Local Train: Avg Loss = 1.3557
+  [Client 0] Evaluate Reward: R_i = 4.80% (381/7933)
+  [Client 1] Local Train: Avg Loss = 1.0067
+  [Client 1] Evaluate Reward: R_i = 16.92% (2166/12799)
+  [Client 2] Local Train: Avg Loss = 1.6045
+  [Client 2] Evaluate Reward: R_i = 5.32% (348/6542)
+  [Client 3] Local Train: Avg Loss = 1.0957
+  [Client 3] Evaluate Reward: R_i = 2.44% (219/8986)
+  [Client 4] Local Train: Avg Loss = 1.3259
+  [Client 4] Evaluate Reward: R_i = 25.72% (3534/13740)
+         [Server] SPSA Update: R+=3.88, R-=15.82, GradFactor=-59.6859
+         [Server] Round 7 Avg Reward (All Clients): 11.04%
+
+[Main] Round 7: グローバルテスト精度を計算中...
+====== [Main] Round 7 Global Test Accuracy: 10.7300% ======
+
+--- Round 8/20 ---
+  [Client 0] Local Train: Avg Loss = 1.3271
+  [Client 0] Evaluate Reward: R_i = 1.40% (111/7933)
+  [Client 1] Local Train: Avg Loss = 0.9824
+  [Client 1] Evaluate Reward: R_i = 15.69% (2008/12799)
+  [Client 2] Local Train: Avg Loss = 1.5664
+  [Client 2] Evaluate Reward: R_i = 7.66% (501/6542)
+  [Client 3] Local Train: Avg Loss = 1.0738
+  [Client 3] Evaluate Reward: R_i = 1.87% (168/8986)
+  [Client 4] Local Train: Avg Loss = 1.2988
+  [Client 4] Evaluate Reward: R_i = 23.96% (3292/13740)
+         [Server] SPSA Update: R+=12.68, R-=8.41, GradFactor=21.3686
+         [Server] Round 8 Avg Reward (All Clients): 10.11%
+
+[Main] Round 8: グローバルテスト精度を計算中...
+====== [Main] Round 8 Global Test Accuracy: 10.5900% ======
+
+--- Round 9/20 ---
+  [Client 0] Local Train: Avg Loss = 1.3003
+  [Client 0] Evaluate Reward: R_i = 9.15% (726/7933)
+  [Client 1] Local Train: Avg Loss = 0.9601
+  [Client 1] Evaluate Reward: R_i = 14.43% (1847/12799)
+  [Client 2] Local Train: Avg Loss = 1.5315
+  [Client 2] Evaluate Reward: R_i = 5.90% (386/6542)
+  [Client 3] Local Train: Avg Loss = 1.0538
+  [Client 3] Evaluate Reward: R_i = 11.89% (1068/8986)
+  [Client 4] Local Train: Avg Loss = 1.2753
+  [Client 4] Evaluate Reward: R_i = 23.44% (3221/13740)
+         [Server] SPSA Update: R+=16.30, R-=10.74, GradFactor=27.7915
+         [Server] Round 9 Avg Reward (All Clients): 12.96%
+
+[Main] Round 9: グローバルテスト精度を計算中...
+====== [Main] Round 9 Global Test Accuracy: 11.4800% ======
+
+--- Round 10/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2794
+  [Client 0] Evaluate Reward: R_i = 2.03% (161/7933)
+  [Client 1] Local Train: Avg Loss = 0.9426
+  [Client 1] Evaluate Reward: R_i = 15.06% (1928/12799)
+  [Client 2] Local Train: Avg Loss = 1.5003
+  [Client 2] Evaluate Reward: R_i = 10.90% (713/6542)
+  [Client 3] Local Train: Avg Loss = 1.0383
+  [Client 3] Evaluate Reward: R_i = 12.47% (1121/8986)
+  [Client 4] Local Train: Avg Loss = 1.2546
+  [Client 4] Evaluate Reward: R_i = 25.33% (3480/13740)
+         [Server] SPSA Update: R+=18.11, R-=9.86, GradFactor=41.2856
+         [Server] Round 10 Avg Reward (All Clients): 13.16%
+
+[Main] Round 10: グローバルテスト精度を計算中...
+====== [Main] Round 10 Global Test Accuracy: 11.3100% ======
+
+--- Round 11/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2577
+  [Client 0] Evaluate Reward: R_i = 5.77% (458/7933)
+  [Client 1] Local Train: Avg Loss = 0.9235
+  [Client 1] Evaluate Reward: R_i = 15.07% (1929/12799)
+  [Client 2] Local Train: Avg Loss = 1.4728
+  [Client 2] Evaluate Reward: R_i = 5.30% (347/6542)
+  [Client 3] Local Train: Avg Loss = 1.0222
+  [Client 3] Evaluate Reward: R_i = 3.98% (358/8986)
+  [Client 4] Local Train: Avg Loss = 1.2366
+  [Client 4] Evaluate Reward: R_i = 20.68% (2841/13740)
+         [Server] SPSA Update: R+=13.23, R-=8.12, GradFactor=25.5261
+         [Server] Round 11 Avg Reward (All Clients): 10.16%
+
+[Main] Round 11: グローバルテスト精度を計算中...
+====== [Main] Round 11 Global Test Accuracy: 10.7500% ======
+
+--- Round 12/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2407
+  [Client 0] Evaluate Reward: R_i = 6.92% (549/7933)
+  [Client 1] Local Train: Avg Loss = 0.9114
+  [Client 1] Evaluate Reward: R_i = 15.86% (2030/12799)
+  [Client 2] Local Train: Avg Loss = 1.4445
+  [Client 2] Evaluate Reward: R_i = 11.49% (752/6542)
+  [Client 3] Local Train: Avg Loss = 1.0089
+  [Client 3] Evaluate Reward: R_i = 10.94% (983/8986)
+  [Client 4] Local Train: Avg Loss = 1.2191
+  [Client 4] Evaluate Reward: R_i = 23.57% (3239/13740)
+         [Server] SPSA Update: R+=17.26, R-=11.43, GradFactor=29.1552
+         [Server] Round 12 Avg Reward (All Clients): 13.76%
+
+[Main] Round 12: グローバルテスト精度を計算中...
+====== [Main] Round 12 Global Test Accuracy: 11.5400% ======
+
+--- Round 13/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2229
+  [Client 0] Evaluate Reward: R_i = 2.16% (171/7933)
+  [Client 1] Local Train: Avg Loss = 0.8970
+  [Client 1] Evaluate Reward: R_i = 14.90% (1907/12799)
+  [Client 2] Local Train: Avg Loss = 1.4253
+  [Client 2] Evaluate Reward: R_i = 8.79% (575/6542)
+  [Client 3] Local Train: Avg Loss = 0.9959
+  [Client 3] Evaluate Reward: R_i = 10.54% (947/8986)
+  [Client 4] Local Train: Avg Loss = 1.2027
+  [Client 4] Evaluate Reward: R_i = 22.19% (3049/13740)
+         [Server] SPSA Update: R+=6.35, R-=15.29, GradFactor=-44.7307
+         [Server] Round 13 Avg Reward (All Clients): 11.71%
+
+[Main] Round 13: グローバルテスト精度を計算中...
+====== [Main] Round 13 Global Test Accuracy: 10.6200% ======
+
+--- Round 14/20 ---
+  [Client 0] Local Train: Avg Loss = 1.2059
+  [Client 0] Evaluate Reward: R_i = 1.82% (144/7933)
+  [Client 1] Local Train: Avg Loss = 0.8849
+  [Client 1] Evaluate Reward: R_i = 19.03% (2436/12799)
+  [Client 2] Local Train: Avg Loss = 1.4057
+  [Client 2] Evaluate Reward: R_i = 8.10% (530/6542)
+  [Client 3] Local Train: Avg Loss = 0.9825
+  [Client 3] Evaluate Reward: R_i = 17.27% (1552/8986)
+  [Client 4] Local Train: Avg Loss = 1.1883
+  [Client 4] Evaluate Reward: R_i = 20.81% (2859/13740)
+         [Server] SPSA Update: R+=14.45, R-=12.71, GradFactor=8.7413
+         [Server] Round 14 Avg Reward (All Clients): 13.41%
+
+[Main] Round 14: グローバルテスト精度を計算中...
+====== [Main] Round 14 Global Test Accuracy: 11.1600% ======
+
+--- Round 15/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1923
+  [Client 0] Evaluate Reward: R_i = 2.07% (164/7933)
+  [Client 1] Local Train: Avg Loss = 0.8710
+  [Client 1] Evaluate Reward: R_i = 15.17% (1942/12799)
+  [Client 2] Local Train: Avg Loss = 1.3864
+  [Client 2] Evaluate Reward: R_i = 9.55% (625/6542)
+  [Client 3] Local Train: Avg Loss = 0.9714
+  [Client 3] Evaluate Reward: R_i = 4.05% (364/8986)
+  [Client 4] Local Train: Avg Loss = 1.1737
+  [Client 4] Evaluate Reward: R_i = 23.86% (3278/13740)
+         [Server] SPSA Update: R+=3.06, R-=16.19, GradFactor=-65.6783
+         [Server] Round 15 Avg Reward (All Clients): 10.94%
+
+[Main] Round 15: グローバルテスト精度を計算中...
+====== [Main] Round 15 Global Test Accuracy: 10.9400% ======
+
+--- Round 16/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1775
+  [Client 0] Evaluate Reward: R_i = 3.50% (278/7933)
+  [Client 1] Local Train: Avg Loss = 0.8630
+  [Client 1] Evaluate Reward: R_i = 15.43% (1975/12799)
+  [Client 2] Local Train: Avg Loss = 1.3699
+  [Client 2] Evaluate Reward: R_i = 8.27% (541/6542)
+  [Client 3] Local Train: Avg Loss = 0.9586
+  [Client 3] Evaluate Reward: R_i = 3.57% (321/8986)
+  [Client 4] Local Train: Avg Loss = 1.1606
+  [Client 4] Evaluate Reward: R_i = 23.50% (3229/13740)
+         [Server] SPSA Update: R+=19.47, R-=5.12, GradFactor=71.7520
+         [Server] Round 16 Avg Reward (All Clients): 10.86%
+
+[Main] Round 16: グローバルテスト精度を計算中...
+====== [Main] Round 16 Global Test Accuracy: 11.6500% ======
+
+--- Round 17/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1625
+  [Client 0] Evaluate Reward: R_i = 4.66% (370/7933)
+  [Client 1] Local Train: Avg Loss = 0.8517
+  [Client 1] Evaluate Reward: R_i = 10.15% (1299/12799)
+  [Client 2] Local Train: Avg Loss = 1.3547
+  [Client 2] Evaluate Reward: R_i = 9.63% (630/6542)
+  [Client 3] Local Train: Avg Loss = 0.9473
+  [Client 3] Evaluate Reward: R_i = 9.28% (834/8986)
+  [Client 4] Local Train: Avg Loss = 1.1472
+  [Client 4] Evaluate Reward: R_i = 21.63% (2972/13740)
+         [Server] SPSA Update: R+=6.97, R-=13.80, GradFactor=-34.1531
+         [Server] Round 17 Avg Reward (All Clients): 11.07%
+
+[Main] Round 17: グローバルテスト精度を計算中...
+====== [Main] Round 17 Global Test Accuracy: 10.3800% ======
+
+--- Round 18/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1492
+  [Client 0] Evaluate Reward: R_i = 2.11% (167/7933)
+  [Client 1] Local Train: Avg Loss = 0.8418
+  [Client 1] Evaluate Reward: R_i = 15.51% (1985/12799)
+  [Client 2] Local Train: Avg Loss = 1.3403
+  [Client 2] Evaluate Reward: R_i = 8.99% (588/6542)
+  [Client 3] Local Train: Avg Loss = 0.9390
+  [Client 3] Evaluate Reward: R_i = 2.56% (230/8986)
+  [Client 4] Local Train: Avg Loss = 1.1362
+  [Client 4] Evaluate Reward: R_i = 26.79% (3681/13740)
+         [Server] SPSA Update: R+=2.33, R-=17.10, GradFactor=-73.8175
+         [Server] Round 18 Avg Reward (All Clients): 11.19%
+
+[Main] Round 18: グローバルテスト精度を計算中...
+====== [Main] Round 18 Global Test Accuracy: 10.5500% ======
+
+--- Round 19/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1364
+  [Client 0] Evaluate Reward: R_i = 3.74% (297/7933)
+  [Client 1] Local Train: Avg Loss = 0.8332
+  [Client 1] Evaluate Reward: R_i = 16.13% (2065/12799)
+  [Client 2] Local Train: Avg Loss = 1.3259
+  [Client 2] Evaluate Reward: R_i = 10.24% (670/6542)
+  [Client 3] Local Train: Avg Loss = 0.9266
+  [Client 3] Evaluate Reward: R_i = 5.49% (493/8986)
+  [Client 4] Local Train: Avg Loss = 1.1250
+  [Client 4] Evaluate Reward: R_i = 23.77% (3266/13740)
+         [Server] SPSA Update: R+=13.19, R-=11.00, GradFactor=10.9387
+         [Server] Round 19 Avg Reward (All Clients): 11.88%
+
+[Main] Round 19: グローバルテスト精度を計算中...
+====== [Main] Round 19 Global Test Accuracy: 10.9100% ======
+
+--- Round 20/20 ---
+  [Client 0] Local Train: Avg Loss = 1.1243
+  [Client 0] Evaluate Reward: R_i = 5.77% (458/7933)
+  [Client 1] Local Train: Avg Loss = 0.8250
+  [Client 1] Evaluate Reward: R_i = 13.01% (1665/12799)
+  [Client 2] Local Train: Avg Loss = 1.3125
+  [Client 2] Evaluate Reward: R_i = 7.89% (516/6542)
+  [Client 3] Local Train: Avg Loss = 0.9171
+  [Client 3] Evaluate Reward: R_i = 4.70% (422/8986)
+  [Client 4] Local Train: Avg Loss = 1.1151
+  [Client 4] Evaluate Reward: R_i = 23.77% (3266/13740)
+         [Server] SPSA Update: R+=6.29, R-=14.18, GradFactor=-39.4611
+
+[Server] Shapley値 (TMC) の計算を開始...
+           [Shapley] TMC-Shapley (T=20) 開始...
+           [Shapley] V(S=[3]) = 9.7900%
+           [Shapley] V(S=[0, 3]) = 9.1100%
+           [Shapley] V(S=[0, 2, 3]) = 10.4700%
+           [Shapley] V(S=[0, 1, 2, 3]) = 10.4500%
+           [Shapley] V(S=[0, 1, 2, 3, 4]) = 10.5200%
+           [Shapley] V(S=[4]) = 13.4200%
+           [Shapley] V(S=[0, 4]) = 12.5400%
+           [Shapley] V(S=[0, 1, 4]) = 10.3900%
+           [Shapley] V(S=[0, 1, 3, 4]) = 9.2600%
+           [Shapley] V(S=[1, 3]) = 9.1800%
+           [Shapley] V(S=[1, 2, 3]) = 10.2000%
+           [Shapley] V(S=[1, 4]) = 9.6300%
+           [Shapley] V(S=[3, 4]) = 8.8300%
+           [Shapley] V(S=[0, 3, 4]) = 9.8100%
+           [Shapley] V(S=[0, 2, 3, 4]) = 11.2800%
+           [Shapley] V(S=[1, 3, 4]) = 8.5800%
+           [Shapley] V(S=[1, 2, 3, 4]) = 10.2200%
+           [Shapley] V(S=[0]) = 11.1700%
+           [Shapley] V(S=[1]) = 10.4800%
+           [Shapley] V(S=[2, 4]) = 13.5900%
+           [Shapley] V(S=[2, 3, 4]) = 11.2500%
+           [Shapley] V(S=[1, 2, 4]) = 11.7900%
+           [Shapley] V(S=[1, 2]) = 11.9900%
+           [Shapley] V(S=[0, 1, 2]) = 11.6500%
+           [Shapley] V(S=[0, 1, 2, 4]) = 11.5600%
+           [Shapley] V(S=[2]) = 12.0800%
+           [Shapley] V(S=[0, 1, 3]) = 9.1300%
+           [Shapley] V(S=[0, 2, 4]) = 12.9200%
+[Server] Shapley Values (TMC) 算出完了:
+         Client 0: phi = 0.4190
+         Client 1: phi = -0.0485
+         Client 2: phi = 1.6965
+         Client 3: phi = 1.5790
+         Client 4: phi = 6.8740
+
+[Server] Gradient-based Proxy Validation を開始...
+[Proxy Validation] 各クライアントの勾配貢献度 (C_i) を計算:
+         Client 0: C_i = 2.1739e+00
+         Client 1: C_i = 1.5747e+00
+         Client 2: C_i = 2.5277e+00
+         Client 3: C_i = 2.7809e+00
+         Client 4: C_i = 3.3772e+00
+
+========================================
+--- Gradient-based Proxy 検証結果 ---
+========================================
+Client ID  | Phi (Shapley値)    | C_i (Proxyスコア)   
+------------------------------------------------
+0          | 0.4190            | 2.1739e+00       
+1          | -0.0485           | 1.5747e+00       
+2          | 1.6965            | 2.5277e+00       
+3          | 1.5790            | 2.7809e+00       
+4          | 6.8740            | 3.3772e+00       
+------------------------------------------------
+
+[相関分析結果]
+スピアマン相関係数 (rho) : 0.9000 (p-value: 0.0374)
+
+[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。
+         [Server] Round 20 Avg Reward (All Clients): 11.03%
+
+[Main] Round 20: グローバルテスト精度を計算中...
+====== [Main] Round 20 Global Test Accuracy: 10.5200% ======
+------------------------------
+--- [パート1] 学習完了 --- (総所要時間: 685.44 秒)
+
+[Main] すべての処理が完了しました。
