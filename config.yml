@@ -1,0 +1,18 @@
+# Hyperparameters for Dual-B FedLoRA (SPSA) Validation
+
+# --- Experiment Settings ---
+num_clients: 5       # クライアント数 
+num_rounds: 20      # メインの学習ラウンド数
+local_epochs: 2      # 各クライアントでのローカルエポック数
+non_iid_alpha: 0.5     # Non-IIDデータ分割用のDirichlet alpha値
+
+# --- LoRA Settings ---
+rank: 4              # LoRAのランク(r)
+
+# --- Server SPSA Settings ---
+spsa_epsilon: 0.1    # SPSAの摂動の大きさ (epsilon)
+spsa_eta_b: 0.01     # B_server の学習率 (eta_B)
+
+# --- Validation Settings ---
+# TMC (Truncated Monte Carlo) 近似法のためのイテレーション回数
+shapley_tmc_iterations: 20
