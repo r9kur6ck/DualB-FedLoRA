@@ -16,3 +16,6 @@ spsa_eta_b: 0.01     # B_server の学習率 (eta_B)
 # --- Validation Settings ---
 # TMC (Truncated Monte Carlo) 近似法のためのイテレーション回数
 shapley_tmc_iterations: 20
+
+# --- Evaluation Settings ---
+eval_interval: 5     # テスト評価の間隔 

@@ -8,9 +8,9 @@ import numpy as np
 import copy
 import time
 import random
-import json
-import yaml # ★ config.yml 読み込みに必要
+import yaml # config.yml 読み込みに必要
 from scipy.stats import pearsonr, spearmanr # 検証用にインポート
+import json # config表示用にインポート
 
 # --- 1. 共通: データセット準備 (Non-IID) ---
 def get_non_iid_data(num_clients, dataset, alpha=0.3):
@@ -72,25 +72,29 @@ class SimpleCNN(nn.Module):
     def get_lora_parameters(self):
         return [{"params": self.lora_fc1.A}, {"params": self.lora_fc1.B_local}]
     def get_lora_state(self):
+        # .data はGPUテンソルのまま
         return {'A_fc1': self.lora_fc1.A.data}
 
 # --- 3. 共通: クライアント (Client) の実装 ---
 class Client:
-    def __init__(self, client_id, dataloader, local_model):
+    # ★ 修正: device を受け取る
+    def __init__(self, client_id, dataloader, local_model, device):
         self.client_id = client_id
         self.dataloader = dataloader
         self.model = local_model
         self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=0.01)
         self.criterion = nn.CrossEntropyLoss()
+        self.device = device # ★ device を保存
 
     def local_train(self, local_epochs=1):
         self.model.train()
-        total_loss = 0.0
-        total_batches = 0
+        total_loss, total_batches = 0.0, 0
         for epoch in range(local_epochs):
-            epoch_loss = 0.0
-            epoch_batches = 0
+            epoch_loss, epoch_batches = 0.0, 0
             for data, target in self.dataloader:
+                # ★ 修正: データをGPUに移動
+                data, target = data.to(self.device), target.to(self.device)
+                
                 self.optimizer.zero_grad()
                 output = self.model(data, b_server_fc1=None) 
                 loss = self.criterion(output, target)
@@ -100,9 +104,7 @@ class Client:
                 epoch_batches += 1
             total_loss += epoch_loss
             total_batches += epoch_batches
-        
         avg_loss = total_loss / total_batches if total_batches > 0 else 0
-        # ★ログ追加
         print(f"  [Client {self.client_id}] Local Train: Avg Loss = {avg_loss:.4f}")
 
     def evaluate_reward(self, b_server_state):
@@ -110,35 +112,39 @@ class Client:
         correct, total = 0, 0
         with torch.no_grad(): 
             for data, target in self.dataloader:
+                # ★ 修正: データをGPUに移動
+                data, target = data.to(self.device), target.to(self.device)
+                
                 output = self.model(data, b_server_fc1=b_server_state['B_server_fc1'])
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
                 total += len(target)
-        
         avg_accuracy = 100. * correct / total if total > 0 else 0
         R_i = avg_accuracy 
-        
-        # ★ログ追加
         print(f"  [Client {self.client_id}] Evaluate Reward: R_i = {R_i:.2f}% ({correct}/{total})")
-        
         A_i_state = self.model.get_lora_state()
         return A_i_state, R_i
 
 # --- 4. [パート1] Shapley値計算用サーバ (Server) ---
 class ShapleyComputeServer:
-    def __init__(self, base_model, rank, test_loader):
+    # ★ 修正: device を受け取る
+    def __init__(self, base_model, rank, test_loader, device):
         d, k = base_model.fc1.in_features, base_model.fc1.out_features
-        self.B_server_state = {'B_server_fc1': nn.Parameter(torch.randn(k, rank) / rank)}
+        # ★ 修正: B_server_state をGPUに配置
+        self.B_server_state = {'B_server_fc1': nn.Parameter(torch.randn(k, rank) / rank).to(device)}
         self.rank = rank
         self.all_A_states, self.all_Rewards = {}, {}
         self.base_model, self.test_loader = base_model, test_loader
         self.v_cache, self.final_shapley_values = {}, {}
+        self.device = device # ★ device を保存
         print("[Server] Shapley値計算サーバを初期化しました。")
 
     def generate_spsa_perturbation(self, epsilon):
         k, r = self.B_server_state['B_server_fc1'].shape
-        delta_fc1 = (torch.randint(0, 2, (k, r)) * 2 - 1).float()
+        # ★ 修正: delta (摂動) をGPUに配置
+        delta_fc1 = (torch.randint(0, 2, (k, r)) * 2 - 1).float().to(self.device)
         self.delta_state = {'B_server_fc1': delta_fc1}
+        # B_server と delta が両方GPU上にあるため、以下の計算はGPUで実行される
         B_plus_fc1 = self.B_server_state['B_server_fc1'] + epsilon * delta_fc1
         B_minus_fc1 = self.B_server_state['B_server_fc1'] - epsilon * delta_fc1
         return {'B_server_fc1': B_plus_fc1}, {'B_server_fc1': B_minus_fc1}
@@ -148,19 +154,15 @@ class ShapleyComputeServer:
         R_minus_list = [r for client_id, r in self.all_Rewards.items() if client_id in client_groups['minus']]
         R_plus = np.mean(R_plus_list) if R_plus_list else 0
         R_minus = np.mean(R_minus_list) if R_minus_list else 0
-        
-        # ★ログ追加: ラウンドの平均報酬
         all_rewards = list(self.all_Rewards.values())
         avg_reward_all = np.mean(all_rewards) if all_rewards else 0.0
         
         if epsilon == 0: return avg_reward_all
-
         grad_factor = (R_plus - R_minus) / (2 * epsilon)
         g_hat_fc1 = grad_factor * self.delta_state['B_server_fc1']
         with torch.no_grad():
             self.B_server_state['B_server_fc1'].add_(eta_B_server * g_hat_fc1)
         
-        # ★ログ変更: R+ R- に加えて GradFactor も表示
         print(f"         [Server] SPSA Update: R+={R_plus:.2f}, R-={R_minus:.2f}, GradFactor={grad_factor:.4f}")
         
         if compute_shapley_round:
@@ -168,7 +170,7 @@ class ShapleyComputeServer:
             self.compute_shapley_tmc(self.all_A_states, self.B_server_state, mc_iterations=mc_iterations)
         
         self.v_cache.clear()
-        return avg_reward_all # ★平均報酬を返す
+        return avg_reward_all
 
     def evaluate_coalition(self, coalition_client_ids, b_server_state):
         coalition_tuple = tuple(sorted(coalition_client_ids))
@@ -178,13 +180,18 @@ class ShapleyComputeServer:
             return 0.0
 
         A_states_in_S = [self.all_A_states[cid]['A_fc1'] for cid in coalition_client_ids]
-        A_S_fc1 = torch.stack(A_states_in_S).mean(dim=0)
-        eval_model = copy.deepcopy(self.base_model)
-        eval_model.lora_fc1.A.data = A_S_fc1
+        # A_states_in_S はGPUテンソルのリストなので、A_S_fc1 もGPUテンソルになる
+        A_S_fc1 = torch.stack(A_states_in_S).mean(dim=0) 
+        
+        eval_model = copy.deepcopy(self.base_model) # base_model はGPU上
+        eval_model.lora_fc1.A.data = A_S_fc1 # A_S_fc1 もGPU上
         eval_model.eval()
         correct, total = 0, 0
         with torch.no_grad():
             for data, target in self.test_loader:
+                # ★ 修正: データをGPUに移動
+                data, target = data.to(self.device), target.to(self.device)
+                
                 output = eval_model(data, b_server_fc1=b_server_state['B_server_fc1'])
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
@@ -192,10 +199,7 @@ class ShapleyComputeServer:
         
         v_s_accuracy = 100. * correct / total if total > 0 else 0
         self.v_cache[coalition_tuple] = v_s_accuracy
-        
-        # ★ログ追加: V(S) の評価結果
         print(f"           [Shapley] V(S={list(coalition_tuple)}) = {v_s_accuracy:.4f}%")
-        
         return v_s_accuracy
 
     def compute_shapley_tmc(self, all_A_states, b_server_state, mc_iterations=20):
@@ -221,6 +225,33 @@ class ShapleyComputeServer:
             print(f"         Client {client_id}: phi = {shapley_values[client_id]:.4f}")
         self.final_shapley_values = shapley_values
 
+    def evaluate_global_model(self):
+        if not self.all_A_states: 
+            print("[Warning] 評価するA行列がありません。")
+            return 0.0
+            
+        A_states_all = [s['A_fc1'] for s in self.all_A_states.values()]
+        # A_global_fc1 もGPUテンソルになる
+        A_global_fc1 = torch.stack(A_states_all).mean(dim=0)
+        
+        eval_model = copy.deepcopy(self.base_model)
+        eval_model.lora_fc1.A.data = A_global_fc1
+        eval_model.eval()
+        correct, total = 0, 0
+        
+        with torch.no_grad():
+            for data, target in self.test_loader:
+                # ★ 修正: データをGPUに移動
+                data, target = data.to(self.device), target.to(self.device)
+                
+                output = eval_model(data, b_server_fc1=self.B_server_state['B_server_fc1'])
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+                total += len(target)
+        
+        v_s_accuracy = 100. * correct / total if total > 0 else 0
+        return v_s_accuracy
+
     def clear_round_data(self):
         self.all_A_states, self.all_Rewards = {}, {}
 
@@ -230,26 +261,36 @@ def run_main_training(config, all_datasets):
     print(f"Clients: {config['num_clients']}, Rounds: {config['num_rounds']}, Rank: {config['rank']}")
     print("-" * 30)
 
+    # ★ 修正: all_datasets から device を取得
+    device = all_datasets['device']
     client_dataloaders = all_datasets['client_dataloaders']
     test_loader = all_datasets['test_loader']
     
-    base_model = SimpleCNN(rank=config['rank'])
+    # ★ 修正: base_model をGPUに移動
+    base_model = SimpleCNN(rank=config['rank']).to(device)
     base_model.eval() 
-    for param in base_model.parameters(): param.requires_grad = False
+    for param in base_model.parameters(): 
+        param.requires_grad = False
     
-    server = ShapleyComputeServer(base_model, rank=config['rank'], test_loader=test_loader)
+    # ★ 修正: device をサーバに渡す
+    server = ShapleyComputeServer(base_model, rank=config['rank'], test_loader=test_loader, device=device)
 
     clients = []
     actual_num_clients = len(client_dataloaders)
     for i in range(actual_num_clients):
-        local_model = copy.deepcopy(base_model)
-        for param_group in local_model.get_lora_parameters(): param_group['params'].requires_grad = True
-        clients.append(Client(i, client_dataloaders[i], local_model))
+        local_model = copy.deepcopy(base_model) # base_model がGPU上なので、コピーもGPU上
+        for param_group in local_model.get_lora_parameters():
+            param_group['params'].requires_grad = True
+        # ★ 修正: device をクライアントに渡す
+        clients.append(Client(i, client_dataloaders[i], local_model, device=device))
     
     print(f"[Main] {len(clients)} クライアントの初期化完了。")
     print("-" * 30)
 
     start_time = time.time()
+    eval_interval = config.get('eval_interval', 5)
+    print(f"[Main] グローバルテスト精度を {eval_interval} ラウンドごとに計算します。")
+    
     for t in range(config['num_rounds']):
         print(f"\n--- Round {t+1}/{config['num_rounds']} ---")
         server.clear_round_data()
@@ -279,25 +320,34 @@ def run_main_training(config, all_datasets):
             compute_shapley_round,
             mc_iterations=config.get('shapley_tmc_iterations', 20)
         )
-        # ★ログ追加: ラウンドごとの平均報酬
         print(f"         [Server] Round {t+1} Avg Reward (All Clients): {avg_reward:.2f}%")
+
+        if (t + 1) % eval_interval == 0 or (t + 1) == config['num_rounds']:
+            print(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
+            current_test_accuracy = server.evaluate_global_model()
+            print(f"====== [Main] Round {t+1} Global Test Accuracy: {current_test_accuracy:.4f}% ======")
 
     total_time = time.time() - start_time
     print("-" * 30)
     print(f"--- [パート1] 学習完了 --- (総所要時間: {total_time:.2f} 秒)")
+    
     return server.final_shapley_values
 
 # --- 6. [パート2] 検証用サーバ (ValidationServer) ---
 class ValidationServer:
-    def __init__(self, base_model, rank, test_loader):
+    # ★ 修正: device を受け取る
+    def __init__(self, base_model, rank, test_loader, device):
         d, k = base_model.fc1.in_features, base_model.fc1.out_features
-        self.B_server_state = {'B_server_fc1': nn.Parameter(torch.randn(k, rank) / rank)}
+        # ★ 修正: B_server_state をGPUに配置
+        self.B_server_state = {'B_server_fc1': nn.Parameter(torch.randn(k, rank) / rank).to(device)}
         self.rank, self.all_A_states, self.all_Rewards = rank, {}, {}
         self.base_model, self.test_loader = base_model, test_loader
+        self.device = device # ★ device を保存
 
     def generate_spsa_perturbation(self, epsilon):
         k, r = self.B_server_state['B_server_fc1'].shape
-        delta_fc1 = (torch.randint(0, 2, (k, r)) * 2 - 1).float()
+        # ★ 修正: delta (摂動) をGPUに配置
+        delta_fc1 = (torch.randint(0, 2, (k, r)) * 2 - 1).float().to(self.device)
         self.delta_state = {'B_server_fc1': delta_fc1}
         B_plus_fc1 = self.B_server_state['B_server_fc1'] + epsilon * delta_fc1
         B_minus_fc1 = self.B_server_state['B_server_fc1'] - epsilon * delta_fc1
@@ -321,17 +371,20 @@ class ValidationServer:
         if not self.all_A_states: return 0.0
         A_states_all = [s['A_fc1'] for s in self.all_A_states.values()]
         A_global_fc1 = torch.stack(A_states_all).mean(dim=0)
+        
         eval_model = copy.deepcopy(self.base_model)
         eval_model.lora_fc1.A.data = A_global_fc1
         eval_model.eval()
         correct, total = 0, 0
         with torch.no_grad():
             for data, target in self.test_loader:
+                # ★ 修正: データをGPUに移動
+                data, target = data.to(self.device), target.to(self.device)
+                
                 output = eval_model(data, b_server_fc1=self.B_server_state['B_server_fc1'])
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
                 total += len(target)
-        
         v_s_accuracy = 100. * correct / total if total > 0 else 0
         return v_s_accuracy
 
@@ -340,27 +393,31 @@ def run_training_for_validation(
     client_ids_to_use, 
     all_dataloaders,
     test_loader,
-    config):
+    config,
+    device): # ★ 修正: device を受け取る
     
     participant_dataloaders = [all_dataloaders[i] for i in client_ids_to_use]
     actual_num_clients = len(participant_dataloaders)
     if actual_num_clients == 0: return 0.0
 
-    base_model = SimpleCNN(rank=config['rank'])
+    # ★ 修正: base_model をGPUに移動
+    base_model = SimpleCNN(rank=config['rank']).to(device)
     base_model.eval() 
-    for param in base_model.parameters(): param.requires_grad = False
+    for param in base_model.parameters(): 
+        param.requires_grad = False
     
-    server = ValidationServer(base_model, rank=config['rank'], test_loader=test_loader)
+    # ★ 修正: device をサーバに渡す
+    server = ValidationServer(base_model, rank=config['rank'], test_loader=test_loader, device=device)
 
     clients = []
     for i, client_id in enumerate(client_ids_to_use):
         local_model = copy.deepcopy(base_model)
-        for param_group in local_model.get_lora_parameters(): param_group['params'].requires_grad = True
-        clients.append(Client(i, participant_dataloaders[i], local_model))
+        for param_group in local_model.get_lora_parameters():
+            param_group['params'].requires_grad = True
+        # ★ 修正: device をクライアントに渡す
+        clients.append(Client(i, participant_dataloaders[i], local_model, device=device))
 
     for t in range(config['num_rounds']):
-        # 検証中はログを最小限にする
-        # print(f"  [Validate] Round {t+1}/{config['num_rounds']}")
         server.clear_round_data()
         B_plus, B_minus = server.generate_spsa_perturbation(epsilon=config['spsa_epsilon'])
         
@@ -390,6 +447,8 @@ def run_validation_experiment(phi_values_dict, config, all_datasets):
     print(f"--- [パート2] Shapley値 妥当性検証 開始 ---")
     print("=" * 40)
 
+    # ★ 修正: all_datasets から device を取得
+    device = all_datasets['device']
     phi_values = [phi_values_dict[i] for i in range(config['num_clients'])]
     print(f"検証対象のShapley値: Phi = {np.array(phi_values)}")
     print("\n[Validate] 実際の貢献度(Delta)の計算を開始します (N+1回の再学習)...")
@@ -402,13 +461,15 @@ def run_validation_experiment(phi_values_dict, config, all_datasets):
 
     print(f"\n[Validate] (0/{config['num_clients']}) Acc_all (全クライアント) の学習...")
     start_loo = time.time()
-    Acc_all = run_training_for_validation(all_client_ids, all_dataloaders, test_loader, config)
+    # ★ 修正: device を渡す
+    Acc_all = run_training_for_validation(all_client_ids, all_dataloaders, test_loader, config, device)
     print(f"[Validate] Acc_all = {Acc_all:.4f}%")
     
     for i in all_client_ids:
         leave_one_out_ids = [j for j in all_client_ids if j != i]
         print(f"\n[Validate] ({i+1}/{config['num_clients']}) Client {i} を除外して再学習...")
-        Acc_sim_i = run_training_for_validation(leave_one_out_ids, all_dataloaders, test_loader, config)
+        # ★ 修正: device を渡す
+        Acc_sim_i = run_training_for_validation(leave_one_out_ids, all_dataloaders, test_loader, config, device)
         Delta_i = Acc_all - Acc_sim_i
         delta_values.append(Delta_i)
         print(f"[Validate] Client {i} 除外: Acc_sim_i = {Acc_sim_i:.4f}% -> Delta_i = {Delta_i:.4f}%")
@@ -416,18 +477,15 @@ def run_validation_experiment(phi_values_dict, config, all_datasets):
     loo_time = time.time() - start_loo
     print(f"\n[Validate] 貢献度(Delta)の計算完了 (所要時間: {loo_time:.2f} 秒)")
 
-    # --- ★ログ強化: 最終結果の表示 ---
     print("\n" + "=" * 40)
     print("--- Shapley値 妥当性検証結果 ---")
     print("=" * 40)
-    
     print(f"{'Client ID':<10} | {'Phi (算出値)':<15} | {'Delta (実測値)':<15}")
     print("-" * 44)
     for i in range(config['num_clients']):
         print(f"{i:<10} | {phi_values[i]:<15.4f} | {delta_values[i]:<15.4f}")
     print("-" * 44)
     
-    # NaN (Not a Number) が含まれていないかチェック
     if np.isnan(phi_values).any() or np.isnan(delta_values).any() or \
        len(phi_values) < 2 or len(delta_values) < 2 or \
        np.std(phi_values) == 0 or np.std(delta_values) == 0:
@@ -457,13 +515,17 @@ if __name__ == "__main__":
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
         print(f"[Main] {config_file} から設定をロードしました。")
-        print(json.dumps(config, indent=2)) # 見やすくJSON形式で表示
+        print(json.dumps(config, indent=2))
     except FileNotFoundError:
         print(f"[Error] {config_file} が見つかりません。")
         exit()
     except Exception as e:
         print(f"[Error] {config_file} の読み込みに失敗しました: {e}")
         exit()
+    
+    # ★ 修正: device を定義
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"\n[Main] Using device: {device}")
     
     # --- 共通データセット準備 (1回だけ実行) ---
     print("\n[Main] 共通データセットを準備します...")
@@ -487,7 +549,8 @@ if __name__ == "__main__":
 
     all_datasets = {
         'client_dataloaders': client_dataloaders,
-        'test_loader': test_loader
+        'test_loader': test_loader,
+        'device': device # ★ 修正: device を辞書に追加
     }
 
     # --- ステップ1: メイン学習とShapley値の計算 ---
