@@ -59,7 +59,6 @@ def get_non_iid_data(num_clients, dataset, alpha=0.3):
     return client_dataloaders
 
 # --- 2. 共通: モデルとLoRAレイヤーの定義 ---
-# (B_local は廃止されたまま)
 class LoRALayer(nn.Module):
     def __init__(self, original_layer, rank):
         super().__init__()
@@ -104,14 +103,12 @@ class Client:
         self.criterion = nn.CrossEntropyLoss()
         self.device = device
 
-    # ★ 修正: B_server の勾配 g_B を返すように変更
     def local_train(self, local_epochs, b_server_state):
         self.model.train()
         total_loss, total_batches = 0.0, 0
         g_A_i = None # Proxy検証用の A の勾配
         g_B_i = None # FedSGD用の B の勾配
         
-        # B_server のテンソルを取得 (requires_grad=True)
         b_fc1 = b_server_state['B_server_fc1']
 
         for epoch in range(local_epochs):
@@ -119,7 +116,6 @@ class Client:
             for data, target in self.dataloader:
                 data, target = data.to(self.device), target.to(self.device)
                 
-                # A と B 両方の勾配を初期化
                 self.optimizer.zero_grad()
                 if b_fc1.grad is not None:
                     b_fc1.grad.zero_()
@@ -127,15 +123,13 @@ class Client:
                 output = self.model(data, b_server_fc1=b_fc1) 
                 loss = self.criterion(output, target)
                 
-                # ★ 勾配計算 (A と B の両方)
                 loss.backward()
                 
                 if self.model.lora_fc1.A.grad is not None:
                     g_A_i = self.model.lora_fc1.A.grad.clone().detach() 
                 if b_fc1.grad is not None:
-                    g_B_i = b_fc1.grad.clone().detach() # ★ Bの勾配を保存
+                    g_B_i = b_fc1.grad.clone().detach() 
                 
-                # ★ A のみ更新
                 self.optimizer.step()
                 
                 epoch_loss += loss.item()
@@ -146,19 +140,28 @@ class Client:
         avg_loss = total_loss / total_batches if total_batches > 0 else 0
         logging.info(f"  [Client {self.client_id}] Local Train (A only): Avg Loss = {avg_loss:.4f}")
 
-        # Aの勾配(Proxy用) と Bの勾配(FedSGD用) を返す
         return {'A_fc1': g_A_i}, {'B_fc1': g_B_i}
 
 # --- 4. [パート1] FedSGDサーバ (Server) ---
 class FedSGDServer:
+    
+    # ★★★ ここを修正 ★★★
     def __init__(self, base_model, rank, test_loader, device, server_lr):
         d, k = base_model.fc1.in_features, base_model.fc1.out_features
-        self.B_server_state = {'B_server_fc1': nn.Parameter(torch.randn(k, rank) / rank).to(device)}
         
-        # ★ FedSGD: B_server を更新するためのオプティマイザ
+        # 1. まず、ランダムなテンソルをCPUで作成し、GPUに移動させる
+        b_tensor_gpu = (torch.randn(k, rank) / rank).to(device)
+        
+        # 2. GPU上のテンソルを nn.Parameter でラップする (これがGPU上のLeafテンソルになる)
+        b_param_leaf = nn.Parameter(b_tensor_gpu)
+
+        # 3. Leafテンソルを state と optimizer の両方に渡す
+        self.B_server_state = {'B_server_fc1': b_param_leaf}
         self.optimizer = optim.SGD([self.B_server_state['B_server_fc1']], lr=server_lr)
         
         self.rank = rank
+        # ★★★ 修正ここまで ★★★
+        
         self.all_A_states = {}
         self.base_model, self.test_loader = base_model, test_loader
         self.v_cache, self.final_shapley_values = {}, {}
@@ -168,17 +171,11 @@ class FedSGDServer:
         
         logging.info(f"[Server] FedSGD (B-update) サーバを初期化しました (lr={server_lr})。")
 
-    # ★ SPSA (generate_spsa_perturbation) は削除
-
-    # ★ 修正: FedSGD (勾配集約) に変更
     def aggregate_and_update(self, compute_shapley_round, mc_iterations):
-        
-        # --- FedSGD: B_server の更新 ---
         if not self.all_Gradients_B:
             logging.warning("[Server] 更新するBの勾配がありません。")
             return
 
-        # 1. Bの勾配を平均化
         valid_grads_b = [g['B_fc1'] for g in self.all_Gradients_B if g['B_fc1'] is not None]
         if not valid_grads_b:
             logging.warning("[Server] 有効なBの勾配がありません。")
@@ -186,14 +183,12 @@ class FedSGDServer:
             
         g_B_global = torch.stack(valid_grads_b).mean(dim=0)
 
-        # 2. サーバのオプティマイザで更新
         self.optimizer.zero_grad()
         self.B_server_state['B_server_fc1'].grad = g_B_global
         self.optimizer.step()
         
         logging.info(f"         [Server] FedSGD Update: B_server を更新しました (Grad Norm: {g_B_global.norm():.4f})")
         
-        # --- 検証 (最終ラウンドのみ) ---
         if compute_shapley_round:
             logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
             self.compute_shapley_tmc(self.all_A_states, self.B_server_state, mc_iterations=mc_iterations)
@@ -203,7 +198,6 @@ class FedSGDServer:
         
         self.v_cache.clear()
 
-    # (evaluate_coalition, compute_shapley_tmc, run_gradient_proxy_validation は変更なし)
     def evaluate_coalition(self, coalition_client_ids, b_server_state):
         coalition_tuple = tuple(sorted(coalition_client_ids))
         if coalition_tuple in self.v_cache: 
@@ -331,7 +325,7 @@ class FedSGDServer:
     def clear_round_data(self):
         self.all_A_states = {}
         self.all_Gradients_A = {}
-        self.all_Gradients_B = [] # ★ Bの勾配リストをクリア
+        self.all_Gradients_B = []
 
 # --- 5. [パート1] メイン学習 実行関数 ---
 def run_main_training(config, all_datasets):
@@ -348,13 +342,12 @@ def run_main_training(config, all_datasets):
     for param in base_model.parameters(): 
         param.requires_grad = False
     
-    # ★ 修正: FedSGDServer を使用し、server_lr を渡す
     server = FedSGDServer(
         base_model, 
         rank=config['rank'], 
         test_loader=test_loader, 
         device=device,
-        server_lr=config.get('server_lr', 0.01) # configからlrを取得
+        server_lr=config.get('server_lr', 0.01)
     )
 
     clients = []
@@ -376,33 +369,35 @@ def run_main_training(config, all_datasets):
         logging.info(f"\n--- Round {t+1}/{config['num_rounds']} ---")
         server.clear_round_data()
         
-        # ★ SPSA (B+, B-) は削除
-        # B_server の現在の状態を全クライアントに渡す
         current_b_server_state = server.B_server_state
+        
+        # B_server の勾配計算を有効にする
+        for param in current_b_server_state.values():
+            param.requires_grad = True
 
         for i in range(actual_num_clients):
             client = clients[i]
             
-            # ★ 修正: local_train が g_A と g_B を返す
             g_A_i, g_B_i = client.local_train(
                 local_epochs=config['local_epochs'],
                 b_server_state=current_b_server_state
             )
             
-            # 3. サーバは A_i (状態), g_A (Proxy用), g_B (更新用) を収集
             A_i_state = client.model.get_lora_state()
             server.all_A_states[i] = A_i_state
             server.all_Gradients_A[i] = g_A_i
             server.all_Gradients_B.append(g_B_i)
+        
+        # B_server の勾配計算を無効にする (サーバ更新オプティマイザが担当するため)
+        for param in current_b_server_state.values():
+            param.requires_grad = False
 
         compute_shapley_round = (t + 1) == config['num_rounds']
         
-        # ★ 修正: FedSGD の更新を実行
         server.aggregate_and_update(
             compute_shapley_round,
             mc_iterations=config.get('shapley_tmc_iterations', 20)
         )
-        # (Avg Reward のログは削除)
 
         if (t + 1) % eval_interval == 0 or (t + 1) == config['num_rounds']:
             logging.info(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
