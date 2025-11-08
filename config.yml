@@ -1,20 +1,19 @@
 # config.yml
-# Hyperparameters for FedSGD-LoRA (B-update)
+# Hyperparameters for Shapley-Weighted SPSA
 
 # --- Experiment Settings ---
 num_clients: 5
 num_rounds: 20
 local_epochs: 2
-non_iid_alpha: 0.5
+non_iid_alpha: 0.3
 
 # --- LoRA Settings ---
 rank: 4
 
-# --- Learning Rate Settings ---
-# B_server を更新するための FedSGD の学習率 (サーバ側)
-server_lr: 0.05
-# A_i を更新するための SGD の学習率 (クライアント側)
-client_lr: 0.01
+# --- Server SPSA Settings ---
+spsa_epsilon: 0.1
+spsa_eta_b: 0.0001 # 1e-4 (SPSAの学習率)
+server_momentum: 0.9 # 慣性項の強さ
 
 # --- Validation Settings ---
 shapley_tmc_iterations: 20
