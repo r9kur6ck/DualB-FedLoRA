@@ -1,21 +1,21 @@
-# Hyperparameters for Dual-B FedLoRA (SPSA) Validation
+# config.yml
+# Hyperparameters for FedSGD-LoRA (B-update)
 
 # --- Experiment Settings ---
-num_clients: 5       # クライアント数 
-num_rounds: 20      # メインの学習ラウンド数
-local_epochs: 2      # 各クライアントでのローカルエポック数
-non_iid_alpha: 0.5     # Non-IIDデータ分割用のDirichlet alpha値
+num_clients: 5
+num_rounds: 20
+local_epochs: 2
+non_iid_alpha: 0.3
 
 # --- LoRA Settings ---
-rank: 4              # LoRAのランク(r)
+rank: 4
 
-# --- Server SPSA Settings ---
-spsa_epsilon: 0.1    # SPSAの摂動の大きさ (epsilon)
-spsa_eta_b: 0.00001   # B_server の学習率 (eta_B)
+# --- Server Settings ---
+# B_server を更新するための FedSGD の学習率
+server_lr: 0.01
 
 # --- Validation Settings ---
-# TMC (Truncated Monte Carlo) 近似法のためのイテレーション回数
 shapley_tmc_iterations: 20
 
 # --- Evaluation Settings ---
-eval_interval: 1     # テスト評価の間隔 
+eval_interval: 1
