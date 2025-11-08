@@ -59,7 +59,6 @@ def get_non_iid_data(num_clients, dataset, alpha=0.3):
     return client_dataloaders
 
 # --- 2. 共通: モデルとLoRAレイヤーの定義 ---
-# (SPSA-FedLoRA / main_ospsa.py と同じ)
 class LoRALayer(nn.Module):
     def __init__(self, original_layer, rank):
         super().__init__()
@@ -131,7 +130,6 @@ class Client:
         avg_loss = total_loss / total_batches if total_batches > 0 else 0
         logging.info(f"  [Client {self.client_id}] Local Train (A only): Avg Loss = {avg_loss:.4f}")
 
-        # --- 訓練後、報酬 R_i を計算 ---
         self.model.eval()
         correct, total = 0, 0
         with torch.no_grad(): 
@@ -150,7 +148,6 @@ class Client:
 
 # --- 4. [パート1] Shapley加重SPSAサーバ (Server) ---
 class ShapleyWeightedSPSAServer:
-    # ★ 修正: num_clients, server_momentum を受け取る
     def __init__(self, base_model, rank, test_loader, device, num_clients, server_momentum):
         d, k = base_model.fc1.in_features, base_model.fc1.out_features
         self.B_server_state = {'B_server_fc1': nn.Parameter(torch.randn(k, rank) / rank).to(device)}
@@ -162,10 +159,8 @@ class ShapleyWeightedSPSAServer:
         self.device = device
         self.all_Gradients_A = {}
         
-        # ★ 追加: Shapley加重SPSA用
         self.momentum = server_momentum
-        self.momentum_buffer = {} # 慣性項
-        # 前ラウンドのShapley値を重みとして保存 (最初は均等)
+        self.momentum_buffer = {} 
         self.shapley_weights_w_i = {i: 1.0/num_clients for i in range(num_clients)}
         
         logging.info(f"[Server] Shapley-Weighted SPSA サーバを初期化しました (Momentum={self.momentum})。")
@@ -178,15 +173,11 @@ class ShapleyWeightedSPSAServer:
         B_minus_fc1 = self.B_server_state['B_server_fc1'] - epsilon * delta_fc1
         return {'B_server_fc1': B_plus_fc1}, {'B_server_fc1': B_minus_fc1}
 
-    # ★ 修正: Shapley加重SPSA更新
-    def aggregate_and_update(self, client_groups, epsilon, eta_B_server, compute_shapley_round, mc_iterations):
+    # ★ 修正: current_round_t を引数に追加
+    def aggregate_and_update(self, client_groups, epsilon, eta_B_server, compute_shapley_round, mc_iterations, current_round_t):
         
-        # --- 1. Shapley加重SPSA ---
-        
-        # 1a. 前ラウンドの重み $w_i^{(t-1)}$ を取得
         weights = self.shapley_weights_w_i
         
-        # 1b. 加重平均報酬 R+ と R- を計算
         R_plus_weighted_sum, R_plus_weight_sum = 0.0, 0.0
         for cid in client_groups['plus']:
             if cid in weights and cid in self.all_Rewards:
@@ -209,47 +200,40 @@ class ShapleyWeightedSPSAServer:
         avg_reward_all = np.mean(list(self.all_Rewards.values())) if self.all_Rewards else 0.0
         if epsilon == 0: return avg_reward_all
 
-        # 1c. SPSA勾配 $\hat{g}$ の計算
         grad_factor = (R_plus - R_minus) / (2 * epsilon)
         g_hat_fc1 = grad_factor * self.delta_state['B_server_fc1']
         
         with torch.no_grad():
-            # 1d. 慣性項 (Momentum) の適用
             update_vec = (self.momentum * self.momentum_buffer.get('B_fc1', 0) + 
                           eta_B_server * g_hat_fc1)
             self.momentum_buffer['B_fc1'] = update_vec
             
-            # 1e. B_server の更新
             self.B_server_state['B_server_fc1'].add_(update_vec)
             
-            # 1f. 低ランク制約 (SVD射影)
             U, S, V = torch.svd(self.B_server_state['B_server_fc1'])
-            S_r = S[:self.rank] # 上位r個の特異値を保持
+            S_r = S[:self.rank] 
             B_projected = U[:, :self.rank] @ torch.diag(S_r) @ V[:, :self.rank].T
             self.B_server_state['B_server_fc1'].data.copy_(B_projected)
         
         logging.info(f"         [Server] SW-SPSA Update: R+(w)={R_plus:.2f}, R-(w)={R_minus:.2f}, GradFactor={grad_factor:.4f}")
         
-        # --- 2. 次ラウンドのためのShapley値の更新 ---
-        # (最終ラウンドかどうかにかかわらず、重み更新のために毎ラウンド計算)
-        
-        logging.info(f"         [Server] (Round {t+1}) 次ラウンド用のShapley重みを計算中...")
+        # ★ 修正: {t+1} -> {current_round_t+1}
+        logging.info(f"         [Server] (Round {current_round_t+1}) 次ラウンド用のShapley重みを計算中...")
         self.compute_shapley_tmc(self.all_A_states, self.B_server_state, mc_iterations=mc_iterations)
         
-        # 2a. 重み $w_i^{(t)}$ の正規化 (負の貢献を除外)
         new_weights = {}
         total_positive_phi = sum(max(phi, 0) for phi in self.final_shapley_values.values())
         if total_positive_phi == 0:
             logging.warning("         [Server] 全員のShapley値が0以下です。重みを均等にリセットします。")
-            total_positive_phi = 1.0 # ゼロ除算を回避 (均等にするため)
+            total_positive_phi = 1e-9 # ゼロ除算を回避
             
         for cid, phi in self.final_shapley_values.items():
-            new_weights[cid] = max(phi, 0) / total_positive_phi
+            # 均等割りも考慮
+            new_weights[cid] = max(phi, 0) / total_positive_phi if total_positive_phi > 1e-9 else 1.0/len(self.final_shapley_values)
         
-        self.shapley_weights_w_i = new_weights # 次のラウンドで使う重みを保存
-        logging.info(f"         [Server] 次ラウンド用の重みを更新完了: {new_weights}")
+        self.shapley_weights_w_i = new_weights 
+        logging.info(f"         [Server] 次ラウンド用の重みを更新完了: {[round(v, 3) for v in new_weights.values()]}")
         
-        # --- 3. 最終ラウンドの検証 ---
         if compute_shapley_round:
             logging.info("\n[Server] Gradient-based Proxy Validation を開始...")
             self.run_gradient_proxy_validation()
@@ -279,8 +263,6 @@ class ShapleyWeightedSPSAServer:
                 total += len(target)
         
         v_s_accuracy = 100. * correct / total if total > 0 else 0
-        self.v_cache[coalition_tuple] = v_s_accuracy
-        # Shapley計算中のログは多すぎるため、INFOからDEBUGレベルに変更
         # logging.info(f"           [Shapley] V(S={list(coalition_tuple)}) = {v_s_accuracy:.4f}%")
         return v_s_accuracy
 
@@ -290,7 +272,6 @@ class ShapleyWeightedSPSAServer:
         if num_clients == 0: return
         shapley_values = {cid: 0.0 for cid in client_ids}
         
-        # logging.info(f"           [Shapley] TMC-Shapley (T={mc_iterations}) 開始...")
         for t in range(mc_iterations):
             random.shuffle(client_ids)
             coalition, v_s_prev = [], self.evaluate_coalition([], b_server_state)
@@ -402,7 +383,6 @@ def run_main_training(config, all_datasets):
     for param in base_model.parameters(): 
         param.requires_grad = False
     
-    # ★ 修正: ShapleyWeightedSPSAServer を使用
     server = ShapleyWeightedSPSAServer(
         base_model, 
         rank=config['rank'], 
@@ -446,7 +426,6 @@ def run_main_training(config, all_datasets):
             else:
                 b_to_train_and_eval = B_minus
             
-            # ★ 修正: g_A と R_i を受け取る
             g_A_i, R_i = client.local_train(
                 local_epochs=config['local_epochs'],
                 b_server_to_train=b_to_train_and_eval
@@ -457,15 +436,16 @@ def run_main_training(config, all_datasets):
             server.all_Rewards[i] = R_i
             server.all_Gradients_A[i] = g_A_i # Proxy検証用
 
-        # ★ 修正: 最終ラウンドかどうかを伝えるフラグ
         compute_shapley_round = (t + 1) == config['num_rounds']
         
+        # ★ 修正: t を渡す
         avg_reward = server.aggregate_and_update(
             client_groups, 
             config['spsa_epsilon'], 
-            config.get('spsa_eta_b', 1e-5), # configから取得
+            config.get('spsa_eta_b', 1e-5), 
             compute_shapley_round,
-            mc_iterations=config.get('shapley_tmc_iterations', 20)
+            mc_iterations=config.get('shapley_tmc_iterations', 20),
+            current_round_t=t
         )
         logging.info(f"         [Server] Round {t+1} Avg Reward (All Clients): {avg_reward:.2f}%")
 
