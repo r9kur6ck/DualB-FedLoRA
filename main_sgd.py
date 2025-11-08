@@ -95,11 +95,13 @@ class SimpleCNN(nn.Module):
 
 # --- 3. 共通: クライアント (Client) の実装 ---
 class Client:
-    def __init__(self, client_id, dataloader, local_model, device):
+    # ★ 修正: client_lr を受け取る
+    def __init__(self, client_id, dataloader, local_model, device, client_lr):
         self.client_id = client_id
         self.dataloader = dataloader
         self.model = local_model
-        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=0.01) # A_i のみ
+        # ★ 修正: client_lr をオプティマイザに設定
+        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=client_lr) # A_i のみ
         self.criterion = nn.CrossEntropyLoss()
         self.device = device
 
@@ -144,30 +146,22 @@ class Client:
 
 # --- 4. [パート1] FedSGDサーバ (Server) ---
 class FedSGDServer:
-    
-    # ★★★ ここを修正 ★★★
     def __init__(self, base_model, rank, test_loader, device, server_lr):
         d, k = base_model.fc1.in_features, base_model.fc1.out_features
         
-        # 1. まず、ランダムなテンソルをCPUで作成し、GPUに移動させる
         b_tensor_gpu = (torch.randn(k, rank) / rank).to(device)
-        
-        # 2. GPU上のテンソルを nn.Parameter でラップする (これがGPU上のLeafテンソルになる)
         b_param_leaf = nn.Parameter(b_tensor_gpu)
 
-        # 3. Leafテンソルを state と optimizer の両方に渡す
         self.B_server_state = {'B_server_fc1': b_param_leaf}
         self.optimizer = optim.SGD([self.B_server_state['B_server_fc1']], lr=server_lr)
         
         self.rank = rank
-        # ★★★ 修正ここまで ★★★
-        
         self.all_A_states = {}
         self.base_model, self.test_loader = base_model, test_loader
         self.v_cache, self.final_shapley_values = {}, {}
         self.device = device
-        self.all_Gradients_A = {} # Proxy検証用
-        self.all_Gradients_B = [] # FedSGD更新用
+        self.all_Gradients_A = {} 
+        self.all_Gradients_B = [] 
         
         logging.info(f"[Server] FedSGD (B-update) サーバを初期化しました (lr={server_lr})。")
 
@@ -236,7 +230,7 @@ class FedSGDServer:
             coalition, v_s_prev = [], self.evaluate_coalition([], b_server_state)
             for client_id in client_ids:
                 coalition.append(client_id)
-                v_s_curr = self.evaluate_coalition(coalition, b_server_state)
+                v_s_curr = self.evaluate_coalition({cid: all_A_states[cid] for cid in coalition}, b_server_state)
                 marginal_contribution = v_s_curr - v_s_prev
                 shapley_values[client_id] += marginal_contribution
                 v_s_prev = v_s_curr
@@ -352,11 +346,16 @@ def run_main_training(config, all_datasets):
 
     clients = []
     actual_num_clients = len(client_dataloaders)
+    # ★ 修正: config から client_lr を取得
+    client_lr = config.get('client_lr', 0.01)
+    logging.info(f"[Main] Client LR: {client_lr}")
+    
     for i in range(actual_num_clients):
         local_model = copy.deepcopy(base_model)
         for param_group in local_model.get_lora_parameters():
             param_group['params'].requires_grad = True
-        clients.append(Client(i, client_dataloaders[i], local_model, device=device))
+        # ★ 修正: Client に client_lr を渡す
+        clients.append(Client(i, client_dataloaders[i], local_model, device=device, client_lr=client_lr))
     
     logging.info(f"[Main] {len(clients)} クライアントの初期化完了。")
     logging.info("-" * 30)
@@ -371,7 +370,6 @@ def run_main_training(config, all_datasets):
         
         current_b_server_state = server.B_server_state
         
-        # B_server の勾配計算を有効にする
         for param in current_b_server_state.values():
             param.requires_grad = True
 
@@ -388,7 +386,6 @@ def run_main_training(config, all_datasets):
             server.all_Gradients_A[i] = g_A_i
             server.all_Gradients_B.append(g_B_i)
         
-        # B_server の勾配計算を無効にする (サーバ更新オプティマイザが担当するため)
         for param in current_b_server_state.values():
             param.requires_grad = False
 
@@ -409,9 +406,6 @@ def run_main_training(config, all_datasets):
     logging.info(f"--- [パート1] 学習完了 --- (総所要時間: {total_time:.2f} 秒)")
     
     return server.final_shapley_values
-
-
-# --- [パート2 は削除] ---
 
 # --- 9. 統合メイン実行ブロック ---
 if __name__ == "__main__":
