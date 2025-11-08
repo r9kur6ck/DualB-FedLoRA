@@ -1,311 +1,310 @@
-[2025-11-08 11:51:14] [INFO] - [Main] config.yml から設定をロードしました。
-[2025-11-08 11:51:14] [INFO] - Loaded config:
+[2025-11-08 12:56:40] [INFO] - [Main] config.yml から設定をロードしました。
+[2025-11-08 12:56:40] [INFO] - Loaded config:
 {
   "num_clients": 5,
   "num_rounds": 20,
   "local_epochs": 2,
-  "non_iid_alpha": 0.3,
+  "non_iid_alpha": 0.5,
   "rank": 4,
-  "server_lr": 0.01,
+  "server_lr": 0.1,
   "shapley_tmc_iterations": 20,
   "eval_interval": 1
 }
-[2025-11-08 11:51:14] [INFO] - 
+[2025-11-08 12:56:40] [INFO] - 
 [Main] Using device: cuda
-[2025-11-08 11:51:14] [INFO] - 
+[2025-11-08 12:56:40] [INFO] - 
 [Main] 共通データセットを準備します...
-[2025-11-08 11:51:15] [INFO] - [Data] Non-IIDデータ分割を開始 (Alpha=0.3)...
-[2025-11-08 11:51:15] [INFO] - [Data] 5 クライアント分のデータローダーを作成完了。
-[2025-11-08 11:51:15] [INFO] - --- [パート1] FedSGD (B-update) 版 ---
-[2025-11-08 11:51:15] [INFO] - Clients: 5, Rounds: 20, Rank: 4
-[2025-11-08 11:51:15] [INFO] - ------------------------------
-[2025-11-08 11:51:16] [INFO] - [Server] FedSGD (B-update) サーバを初期化しました (lr=0.01)。
-[2025-11-08 11:51:16] [INFO] - [Main] 5 クライアントの初期化完了。
-[2025-11-08 11:51:16] [INFO] - ------------------------------
-[2025-11-08 11:51:16] [INFO] - [Main] グローバルテスト精度を 1 ラウンドごとに計算します。
-[2025-11-08 11:51:16] [INFO] - 
+[2025-11-08 12:56:41] [INFO] - [Data] Non-IIDデータ分割を開始 (Alpha=0.5)...
+[2025-11-08 12:56:41] [INFO] - [Data] 5 クライアント分のデータローダーを作成完了。
+[2025-11-08 12:56:41] [INFO] - --- [パート1] FedSGD (B-update) 版 ---
+[2025-11-08 12:56:41] [INFO] - Clients: 5, Rounds: 20, Rank: 4
+[2025-11-08 12:56:41] [INFO] - ------------------------------
+[2025-11-08 12:56:42] [INFO] - [Server] FedSGD (B-update) サーバを初期化しました (lr=0.1)。
+[2025-11-08 12:56:42] [INFO] - [Main] 5 クライアントの初期化完了。
+[2025-11-08 12:56:42] [INFO] - ------------------------------
+[2025-11-08 12:56:42] [INFO] - [Main] グローバルテスト精度を 1 ラウンドごとに計算します。
+[2025-11-08 12:56:42] [INFO] - 
 --- Round 1/20 ---
-[2025-11-08 11:51:22] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.3998
-[2025-11-08 11:51:28] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.7867
-[2025-11-08 11:51:30] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.8033
-[2025-11-08 11:51:33] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.8728
-[2025-11-08 11:51:40] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.6046
-[2025-11-08 11:51:40] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.4930)
-[2025-11-08 11:51:40] [INFO] - 
+[2025-11-08 12:56:49] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.8677
+[2025-11-08 12:56:53] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.7075
+[2025-11-08 12:56:57] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.9013
+[2025-11-08 12:57:00] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.8677
+[2025-11-08 12:57:06] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.5184
+[2025-11-08 12:57:06] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.8373)
+[2025-11-08 12:57:06] [INFO] - 
 [Main] Round 1: グローバルテスト精度を計算中...
-[2025-11-08 11:51:41] [INFO] - ====== [Main] Round 1 Global Test Accuracy: 22.9200% ======
-[2025-11-08 11:51:41] [INFO] - 
+[2025-11-08 12:57:07] [INFO] - ====== [Main] Round 1 Global Test Accuracy: 20.0800% ======
+[2025-11-08 12:57:07] [INFO] - 
 --- Round 2/20 ---
-[2025-11-08 11:51:46] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.2694
-[2025-11-08 11:51:52] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.7286
-[2025-11-08 11:51:54] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.6466
-[2025-11-08 11:51:57] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.6870
-[2025-11-08 11:52:04] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.4357
-[2025-11-08 11:52:04] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.6286)
-[2025-11-08 11:52:04] [INFO] - 
+[2025-11-08 12:57:14] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.7405
+[2025-11-08 12:57:17] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5578
+[2025-11-08 12:57:21] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.7778
+[2025-11-08 12:57:24] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.7562
+[2025-11-08 12:57:30] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.3867
+[2025-11-08 12:57:30] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.9537)
+[2025-11-08 12:57:30] [INFO] - 
 [Main] Round 2: グローバルテスト精度を計算中...
-[2025-11-08 11:52:05] [INFO] - ====== [Main] Round 2 Global Test Accuracy: 24.5400% ======
-[2025-11-08 11:52:05] [INFO] - 
+[2025-11-08 12:57:31] [INFO] - ====== [Main] Round 2 Global Test Accuracy: 22.2700% ======
+[2025-11-08 12:57:31] [INFO] - 
 --- Round 3/20 ---
-[2025-11-08 11:52:10] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.2219
-[2025-11-08 11:52:16] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.6880
-[2025-11-08 11:52:19] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5965
-[2025-11-08 11:52:21] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.5994
-[2025-11-08 11:52:28] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.3866
-[2025-11-08 11:52:28] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.4044)
-[2025-11-08 11:52:28] [INFO] - 
+[2025-11-08 12:57:38] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.6881
+[2025-11-08 12:57:41] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5097
+[2025-11-08 12:57:45] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.6555
+[2025-11-08 12:57:48] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.7658
+[2025-11-08 12:57:54] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.3221
+[2025-11-08 12:57:54] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.9950)
+[2025-11-08 12:57:54] [INFO] - 
 [Main] Round 3: グローバルテスト精度を計算中...
-[2025-11-08 11:52:29] [INFO] - ====== [Main] Round 3 Global Test Accuracy: 24.9000% ======
-[2025-11-08 11:52:29] [INFO] - 
+[2025-11-08 12:57:55] [INFO] - ====== [Main] Round 3 Global Test Accuracy: 24.0300% ======
+[2025-11-08 12:57:55] [INFO] - 
 --- Round 4/20 ---
-[2025-11-08 11:52:34] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.1898
-[2025-11-08 11:52:40] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.6797
-[2025-11-08 11:52:42] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5599
-[2025-11-08 11:52:45] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.5369
-[2025-11-08 11:52:52] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.3537
-[2025-11-08 11:52:52] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.2983)
-[2025-11-08 11:52:52] [INFO] - 
+[2025-11-08 12:58:02] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.6467
+[2025-11-08 12:58:05] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.4582
+[2025-11-08 12:58:09] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5961
+[2025-11-08 12:58:12] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.8050
+[2025-11-08 12:58:18] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2852
+[2025-11-08 12:58:18] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.3552)
+[2025-11-08 12:58:18] [INFO] - 
 [Main] Round 4: グローバルテスト精度を計算中...
-[2025-11-08 11:52:53] [INFO] - ====== [Main] Round 4 Global Test Accuracy: 25.6100% ======
-[2025-11-08 11:52:53] [INFO] - 
+[2025-11-08 12:58:19] [INFO] - ====== [Main] Round 4 Global Test Accuracy: 25.2700% ======
+[2025-11-08 12:58:19] [INFO] - 
 --- Round 5/20 ---
-[2025-11-08 11:52:58] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.1658
-[2025-11-08 11:53:04] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.6620
-[2025-11-08 11:53:07] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5335
-[2025-11-08 11:53:09] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.5051
-[2025-11-08 11:53:16] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.3276
-[2025-11-08 11:53:16] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.2374)
-[2025-11-08 11:53:16] [INFO] - 
+[2025-11-08 12:58:25] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.6177
+[2025-11-08 12:58:29] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.4335
+[2025-11-08 12:58:33] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5853
+[2025-11-08 12:58:36] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.7097
+[2025-11-08 12:58:42] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.3073
+[2025-11-08 12:58:42] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.4353)
+[2025-11-08 12:58:42] [INFO] - 
 [Main] Round 5: グローバルテスト精度を計算中...
-[2025-11-08 11:53:17] [INFO] - ====== [Main] Round 5 Global Test Accuracy: 25.7100% ======
-[2025-11-08 11:53:17] [INFO] - 
+[2025-11-08 12:58:43] [INFO] - ====== [Main] Round 5 Global Test Accuracy: 25.3500% ======
+[2025-11-08 12:58:43] [INFO] - 
 --- Round 6/20 ---
-[2025-11-08 11:53:22] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.1451
-[2025-11-08 11:53:28] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.6482
-[2025-11-08 11:53:31] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5151
-[2025-11-08 11:53:33] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.4794
-[2025-11-08 11:53:40] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.3068
-[2025-11-08 11:53:40] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.8174)
-[2025-11-08 11:53:40] [INFO] - 
+[2025-11-08 12:58:50] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.6368
+[2025-11-08 12:58:53] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.4140
+[2025-11-08 12:58:57] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5883
+[2025-11-08 12:59:00] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.5505
+[2025-11-08 12:59:06] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2318
+[2025-11-08 12:59:06] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.0406)
+[2025-11-08 12:59:06] [INFO] - 
 [Main] Round 6: グローバルテスト精度を計算中...
-[2025-11-08 11:53:41] [INFO] - ====== [Main] Round 6 Global Test Accuracy: 26.1500% ======
-[2025-11-08 11:53:41] [INFO] - 
+[2025-11-08 12:59:07] [INFO] - ====== [Main] Round 6 Global Test Accuracy: 25.8600% ======
+[2025-11-08 12:59:07] [INFO] - 
 --- Round 7/20 ---
-[2025-11-08 11:53:46] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.1268
-[2025-11-08 11:53:52] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.6246
-[2025-11-08 11:53:54] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4971
-[2025-11-08 11:53:57] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.4474
-[2025-11-08 11:54:04] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2892
-[2025-11-08 11:54:04] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.6113)
-[2025-11-08 11:54:04] [INFO] - 
+[2025-11-08 12:59:14] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.6167
+[2025-11-08 12:59:17] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.3837
+[2025-11-08 12:59:21] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5696
+[2025-11-08 12:59:24] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.4728
+[2025-11-08 12:59:30] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2206
+[2025-11-08 12:59:30] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.0701)
+[2025-11-08 12:59:30] [INFO] - 
 [Main] Round 7: グローバルテスト精度を計算中...
-[2025-11-08 11:54:05] [INFO] - ====== [Main] Round 7 Global Test Accuracy: 26.0900% ======
-[2025-11-08 11:54:05] [INFO] - 
+[2025-11-08 12:59:31] [INFO] - ====== [Main] Round 7 Global Test Accuracy: 25.0900% ======
+[2025-11-08 12:59:31] [INFO] - 
 --- Round 8/20 ---
-[2025-11-08 11:54:10] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.1094
-[2025-11-08 11:54:16] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.6070
-[2025-11-08 11:54:18] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4826
-[2025-11-08 11:54:21] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.4030
-[2025-11-08 11:54:28] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2738
-[2025-11-08 11:54:28] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.5967)
-[2025-11-08 11:54:28] [INFO] - 
+[2025-11-08 12:59:38] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.5681
+[2025-11-08 12:59:41] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.3664
+[2025-11-08 12:59:45] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.5248
+[2025-11-08 12:59:48] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.5190
+[2025-11-08 12:59:54] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1933
+[2025-11-08 12:59:54] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.1066)
+[2025-11-08 12:59:54] [INFO] - 
 [Main] Round 8: グローバルテスト精度を計算中...
-[2025-11-08 11:54:29] [INFO] - ====== [Main] Round 8 Global Test Accuracy: 26.0500% ======
-[2025-11-08 11:54:29] [INFO] - 
+[2025-11-08 12:59:55] [INFO] - ====== [Main] Round 8 Global Test Accuracy: 26.3500% ======
+[2025-11-08 12:59:55] [INFO] - 
 --- Round 9/20 ---
-[2025-11-08 11:54:34] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0930
-[2025-11-08 11:54:40] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.6195
-[2025-11-08 11:54:42] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4674
-[2025-11-08 11:54:45] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3740
-[2025-11-08 11:54:51] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2594
-[2025-11-08 11:54:51] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.3230)
-[2025-11-08 11:54:51] [INFO] - 
+[2025-11-08 13:00:01] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.5386
+[2025-11-08 13:00:05] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.3302
+[2025-11-08 13:00:09] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4909
+[2025-11-08 13:00:11] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.5130
+[2025-11-08 13:00:18] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1795
+[2025-11-08 13:00:18] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.7665)
+[2025-11-08 13:00:18] [INFO] - 
 [Main] Round 9: グローバルテスト精度を計算中...
-[2025-11-08 11:54:53] [INFO] - ====== [Main] Round 9 Global Test Accuracy: 26.6400% ======
-[2025-11-08 11:54:53] [INFO] - 
+[2025-11-08 13:00:19] [INFO] - ====== [Main] Round 9 Global Test Accuracy: 28.1600% ======
+[2025-11-08 13:00:19] [INFO] - 
 --- Round 10/20 ---
-[2025-11-08 11:54:58] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0844
-[2025-11-08 11:55:04] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5950
-[2025-11-08 11:55:06] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4608
-[2025-11-08 11:55:09] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3560
-[2025-11-08 11:55:15] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2462
-[2025-11-08 11:55:15] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.0733)
-[2025-11-08 11:55:15] [INFO] - 
+[2025-11-08 13:00:25] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.5303
+[2025-11-08 13:00:29] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.2939
+[2025-11-08 13:00:33] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4728
+[2025-11-08 13:00:35] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.5071
+[2025-11-08 13:00:41] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1554
+[2025-11-08 13:00:41] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.0070)
+[2025-11-08 13:00:41] [INFO] - 
 [Main] Round 10: グローバルテスト精度を計算中...
-[2025-11-08 11:55:17] [INFO] - ====== [Main] Round 10 Global Test Accuracy: 26.4700% ======
-[2025-11-08 11:55:17] [INFO] - 
+[2025-11-08 13:00:43] [INFO] - ====== [Main] Round 10 Global Test Accuracy: 27.0900% ======
+[2025-11-08 13:00:43] [INFO] - 
 --- Round 11/20 ---
-[2025-11-08 11:55:22] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0712
-[2025-11-08 11:55:28] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5973
-[2025-11-08 11:55:30] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4486
-[2025-11-08 11:55:32] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3374
-[2025-11-08 11:55:39] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2334
-[2025-11-08 11:55:39] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.9810)
-[2025-11-08 11:55:39] [INFO] - 
+[2025-11-08 13:00:49] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.5386
+[2025-11-08 13:00:52] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.2560
+[2025-11-08 13:00:56] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4878
+[2025-11-08 13:00:59] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.4709
+[2025-11-08 13:01:05] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1617
+[2025-11-08 13:01:05] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.2069)
+[2025-11-08 13:01:05] [INFO] - 
 [Main] Round 11: グローバルテスト精度を計算中...
-[2025-11-08 11:55:40] [INFO] - ====== [Main] Round 11 Global Test Accuracy: 26.7000% ======
-[2025-11-08 11:55:40] [INFO] - 
+[2025-11-08 13:01:06] [INFO] - ====== [Main] Round 11 Global Test Accuracy: 26.2700% ======
+[2025-11-08 13:01:06] [INFO] - 
 --- Round 12/20 ---
-[2025-11-08 11:55:46] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0599
-[2025-11-08 11:55:52] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5880
-[2025-11-08 11:55:54] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4410
-[2025-11-08 11:55:56] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3207
-[2025-11-08 11:56:03] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2226
-[2025-11-08 11:56:03] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.1090)
-[2025-11-08 11:56:03] [INFO] - 
+[2025-11-08 13:01:13] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.5068
+[2025-11-08 13:01:16] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.2495
+[2025-11-08 13:01:20] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4533
+[2025-11-08 13:01:23] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.5460
+[2025-11-08 13:01:29] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1353
+[2025-11-08 13:01:29] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.1651)
+[2025-11-08 13:01:29] [INFO] - 
 [Main] Round 12: グローバルテスト精度を計算中...
-[2025-11-08 11:56:04] [INFO] - ====== [Main] Round 12 Global Test Accuracy: 27.1300% ======
-[2025-11-08 11:56:04] [INFO] - 
+[2025-11-08 13:01:30] [INFO] - ====== [Main] Round 12 Global Test Accuracy: 28.6700% ======
+[2025-11-08 13:01:30] [INFO] - 
 --- Round 13/20 ---
-[2025-11-08 11:56:09] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0490
-[2025-11-08 11:56:15] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5848
-[2025-11-08 11:56:18] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4318
-[2025-11-08 11:56:20] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3038
-[2025-11-08 11:56:27] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2132
-[2025-11-08 11:56:27] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.6055)
-[2025-11-08 11:56:27] [INFO] - 
+[2025-11-08 13:01:36] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4741
+[2025-11-08 13:01:40] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.2303
+[2025-11-08 13:01:44] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4369
+[2025-11-08 13:01:46] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.4074
+[2025-11-08 13:01:52] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1272
+[2025-11-08 13:01:52] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.8945)
+[2025-11-08 13:01:52] [INFO] - 
 [Main] Round 13: グローバルテスト精度を計算中...
-[2025-11-08 11:56:28] [INFO] - ====== [Main] Round 13 Global Test Accuracy: 27.1200% ======
-[2025-11-08 11:56:28] [INFO] - 
+[2025-11-08 13:01:54] [INFO] - ====== [Main] Round 13 Global Test Accuracy: 30.0400% ======
+[2025-11-08 13:01:54] [INFO] - 
 --- Round 14/20 ---
-[2025-11-08 11:56:33] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0388
-[2025-11-08 11:56:39] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5533
-[2025-11-08 11:56:41] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4270
-[2025-11-08 11:56:44] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.2922
-[2025-11-08 11:56:51] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2028
-[2025-11-08 11:56:51] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.1994)
-[2025-11-08 11:56:51] [INFO] - 
+[2025-11-08 13:02:00] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4703
+[2025-11-08 13:02:03] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.2148
+[2025-11-08 13:02:07] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4166
+[2025-11-08 13:02:10] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3594
+[2025-11-08 13:02:16] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1282
+[2025-11-08 13:02:16] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.9476)
+[2025-11-08 13:02:16] [INFO] - 
 [Main] Round 14: グローバルテスト精度を計算中...
-[2025-11-08 11:56:52] [INFO] - ====== [Main] Round 14 Global Test Accuracy: 26.8700% ======
-[2025-11-08 11:56:52] [INFO] - 
+[2025-11-08 13:02:17] [INFO] - ====== [Main] Round 14 Global Test Accuracy: 29.7200% ======
+[2025-11-08 13:02:17] [INFO] - 
 --- Round 15/20 ---
-[2025-11-08 11:56:57] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0296
-[2025-11-08 11:57:03] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5482
-[2025-11-08 11:57:05] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4193
-[2025-11-08 11:57:08] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.2735
-[2025-11-08 11:57:14] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1967
-[2025-11-08 11:57:14] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.3193)
-[2025-11-08 11:57:14] [INFO] - 
+[2025-11-08 13:02:24] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4438
+[2025-11-08 13:02:27] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.2384
+[2025-11-08 13:02:31] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4106
+[2025-11-08 13:02:34] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3527
+[2025-11-08 13:02:40] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1032
+[2025-11-08 13:02:40] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.3479)
+[2025-11-08 13:02:40] [INFO] - 
 [Main] Round 15: グローバルテスト精度を計算中...
-[2025-11-08 11:57:16] [INFO] - ====== [Main] Round 15 Global Test Accuracy: 26.7700% ======
-[2025-11-08 11:57:16] [INFO] - 
+[2025-11-08 13:02:41] [INFO] - ====== [Main] Round 15 Global Test Accuracy: 30.7400% ======
+[2025-11-08 13:02:41] [INFO] - 
 --- Round 16/20 ---
-[2025-11-08 11:57:21] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0218
-[2025-11-08 11:57:27] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5167
-[2025-11-08 11:57:30] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4157
-[2025-11-08 11:57:32] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.2621
-[2025-11-08 11:57:40] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1867
-[2025-11-08 11:57:40] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.1185)
-[2025-11-08 11:57:40] [INFO] - 
+[2025-11-08 13:02:47] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4488
+[2025-11-08 13:02:51] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.1806
+[2025-11-08 13:02:55] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.3907
+[2025-11-08 13:02:57] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3460
+[2025-11-08 13:03:03] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1348
+[2025-11-08 13:03:03] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.4515)
+[2025-11-08 13:03:03] [INFO] - 
 [Main] Round 16: グローバルテスト精度を計算中...
-[2025-11-08 11:57:41] [INFO] - ====== [Main] Round 16 Global Test Accuracy: 26.6300% ======
-[2025-11-08 11:57:41] [INFO] - 
+[2025-11-08 13:03:04] [INFO] - ====== [Main] Round 16 Global Test Accuracy: 28.3900% ======
+[2025-11-08 13:03:04] [INFO] - 
 --- Round 17/20 ---
-[2025-11-08 11:57:46] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0148
-[2025-11-08 11:57:52] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5069
-[2025-11-08 11:57:54] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4106
-[2025-11-08 11:57:57] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.2492
-[2025-11-08 11:58:04] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1788
-[2025-11-08 11:58:04] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.9557)
-[2025-11-08 11:58:04] [INFO] - 
+[2025-11-08 13:03:11] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4277
+[2025-11-08 13:03:14] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.2112
+[2025-11-08 13:03:18] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.3623
+[2025-11-08 13:03:21] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3874
+[2025-11-08 13:03:27] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.0902
+[2025-11-08 13:03:27] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.2410)
+[2025-11-08 13:03:27] [INFO] - 
 [Main] Round 17: グローバルテスト精度を計算中...
-[2025-11-08 11:58:05] [INFO] - ====== [Main] Round 17 Global Test Accuracy: 26.9400% ======
-[2025-11-08 11:58:05] [INFO] - 
+[2025-11-08 13:03:28] [INFO] - ====== [Main] Round 17 Global Test Accuracy: 30.7900% ======
+[2025-11-08 13:03:28] [INFO] - 
 --- Round 18/20 ---
-[2025-11-08 11:58:10] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0100
-[2025-11-08 11:58:16] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.4641
-[2025-11-08 11:58:18] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4099
-[2025-11-08 11:58:21] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.2474
-[2025-11-08 11:58:28] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1710
-[2025-11-08 11:58:28] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.5035)
-[2025-11-08 11:58:28] [INFO] - 
+[2025-11-08 13:03:34] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4301
+[2025-11-08 13:03:38] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.1885
+[2025-11-08 13:03:42] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.3703
+[2025-11-08 13:03:44] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3394
+[2025-11-08 13:03:51] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.0997
+[2025-11-08 13:03:51] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.1442)
+[2025-11-08 13:03:51] [INFO] - 
 [Main] Round 18: グローバルテスト精度を計算中...
-[2025-11-08 11:58:29] [INFO] - ====== [Main] Round 18 Global Test Accuracy: 26.6900% ======
-[2025-11-08 11:58:29] [INFO] - 
+[2025-11-08 13:03:52] [INFO] - ====== [Main] Round 18 Global Test Accuracy: 30.0600% ======
+[2025-11-08 13:03:52] [INFO] - 
 --- Round 19/20 ---
-[2025-11-08 11:58:34] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0022
-[2025-11-08 11:58:41] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.4256
-[2025-11-08 11:58:43] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4066
-[2025-11-08 11:58:46] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.2361
-[2025-11-08 11:58:53] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1617
-[2025-11-08 11:58:53] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.7310)
-[2025-11-08 11:58:53] [INFO] - 
+[2025-11-08 13:03:58] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4439
+[2025-11-08 13:04:02] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.1552
+[2025-11-08 13:04:06] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.3856
+[2025-11-08 13:04:08] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3294
+[2025-11-08 13:04:14] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1038
+[2025-11-08 13:04:14] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.1641)
+[2025-11-08 13:04:14] [INFO] - 
 [Main] Round 19: グローバルテスト精度を計算中...
-[2025-11-08 11:58:54] [INFO] - ====== [Main] Round 19 Global Test Accuracy: 26.2300% ======
-[2025-11-08 11:58:54] [INFO] - 
+[2025-11-08 13:04:16] [INFO] - ====== [Main] Round 19 Global Test Accuracy: 32.7800% ======
+[2025-11-08 13:04:16] [INFO] - 
 --- Round 20/20 ---
-[2025-11-08 11:59:00] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.9963
-[2025-11-08 11:59:06] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.4624
-[2025-11-08 11:59:08] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.3951
-[2025-11-08 11:59:10] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.2366
-[2025-11-08 11:59:17] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1561
-[2025-11-08 11:59:17] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 2.0254)
-[2025-11-08 11:59:17] [INFO] - 
+[2025-11-08 13:04:22] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4222
+[2025-11-08 13:04:25] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.1229
+[2025-11-08 13:04:29] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.3411
+[2025-11-08 13:04:32] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.3609
+[2025-11-08 13:04:38] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.0932
+[2025-11-08 13:04:38] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.2612)
+[2025-11-08 13:04:38] [INFO] - 
 [Server] Shapley値 (TMC) の計算を開始...
-[2025-11-08 11:59:17] [INFO] -            [Shapley] TMC-Shapley (T=20) 開始...
-[2025-11-08 11:59:19] [INFO] -            [Shapley] V(S=[2]) = 22.1200%
-[2025-11-08 11:59:20] [INFO] -            [Shapley] V(S=[2, 3]) = 25.1300%
-[2025-11-08 11:59:21] [INFO] -            [Shapley] V(S=[2, 3, 4]) = 27.0900%
-[2025-11-08 11:59:23] [INFO] -            [Shapley] V(S=[0, 2, 3, 4]) = 30.2400%
-[2025-11-08 11:59:24] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 26.8500%
-[2025-11-08 11:59:25] [INFO] -            [Shapley] V(S=[1]) = 18.0700%
-[2025-11-08 11:59:26] [INFO] -            [Shapley] V(S=[0, 1]) = 21.2900%
-[2025-11-08 11:59:28] [INFO] -            [Shapley] V(S=[0, 1, 3]) = 24.8200%
-[2025-11-08 11:59:29] [INFO] -            [Shapley] V(S=[0, 1, 2, 3]) = 25.1100%
-[2025-11-08 11:59:30] [INFO] -            [Shapley] V(S=[0]) = 22.3400%
-[2025-11-08 11:59:31] [INFO] -            [Shapley] V(S=[0, 2]) = 25.7900%
-[2025-11-08 11:59:33] [INFO] -            [Shapley] V(S=[0, 1, 2]) = 23.8600%
-[2025-11-08 11:59:34] [INFO] -            [Shapley] V(S=[0, 1, 2, 4]) = 25.4000%
-[2025-11-08 11:59:35] [INFO] -            [Shapley] V(S=[0, 2, 4]) = 28.7600%
-[2025-11-08 11:59:37] [INFO] -            [Shapley] V(S=[4]) = 27.8400%
-[2025-11-08 11:59:38] [INFO] -            [Shapley] V(S=[0, 4]) = 28.6500%
-[2025-11-08 11:59:39] [INFO] -            [Shapley] V(S=[0, 3, 4]) = 31.1900%
-[2025-11-08 11:59:41] [INFO] -            [Shapley] V(S=[0, 1, 3, 4]) = 26.9600%
-[2025-11-08 11:59:42] [INFO] -            [Shapley] V(S=[3]) = 25.2900%
-[2025-11-08 11:59:43] [INFO] -            [Shapley] V(S=[3, 4]) = 29.9700%
-[2025-11-08 11:59:45] [INFO] -            [Shapley] V(S=[1, 2, 3]) = 23.5200%
-[2025-11-08 11:59:46] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 25.1500%
-[2025-11-08 11:59:47] [INFO] -            [Shapley] V(S=[1, 3, 4]) = 23.8000%
-[2025-11-08 11:59:48] [INFO] -            [Shapley] V(S=[0, 3]) = 26.7900%
-[2025-11-08 11:59:49] [INFO] -            [Shapley] V(S=[0, 2, 3]) = 27.6500%
-[2025-11-08 11:59:51] [INFO] -            [Shapley] V(S=[2, 4]) = 25.9800%
-[2025-11-08 11:59:52] [INFO] -            [Shapley] V(S=[1, 2, 4]) = 21.8400%
-[2025-11-08 11:59:53] [INFO] -            [Shapley] V(S=[1, 2]) = 19.2200%
-[2025-11-08 11:59:53] [INFO] - [Server] Shapley Values (TMC) 算出完了:
-[2025-11-08 11:59:53] [INFO] -          Client 0: phi = 9.5575
-[2025-11-08 11:59:53] [INFO] -          Client 1: phi = -1.1255
-[2025-11-08 11:59:53] [INFO] -          Client 2: phi = 5.7440
-[2025-11-08 11:59:53] [INFO] -          Client 3: phi = 7.0330
-[2025-11-08 11:59:53] [INFO] -          Client 4: phi = 5.6410
-[2025-11-08 11:59:53] [INFO] - 
+[2025-11-08 13:04:38] [INFO] -            [Shapley] TMC-Shapley (T=20) 開始...
+[2025-11-08 13:04:39] [INFO] -            [Shapley] V(S=[0]) = 32.9700%
+[2025-11-08 13:04:41] [INFO] -            [Shapley] V(S=[0, 3]) = 29.8200%
+[2025-11-08 13:04:42] [INFO] -            [Shapley] V(S=[0, 1, 3]) = 30.8100%
+[2025-11-08 13:04:43] [INFO] -            [Shapley] V(S=[0, 1, 3, 4]) = 32.8300%
+[2025-11-08 13:04:44] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 32.2000%
+[2025-11-08 13:04:45] [INFO] -            [Shapley] V(S=[1]) = 24.6400%
+[2025-11-08 13:04:47] [INFO] -            [Shapley] V(S=[1, 4]) = 30.2800%
+[2025-11-08 13:04:48] [INFO] -            [Shapley] V(S=[1, 2, 4]) = 30.7200%
+[2025-11-08 13:04:49] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 29.9900%
+[2025-11-08 13:04:50] [INFO] -            [Shapley] V(S=[0, 1]) = 31.7800%
+[2025-11-08 13:04:52] [INFO] -            [Shapley] V(S=[3]) = 24.7400%
+[2025-11-08 13:04:53] [INFO] -            [Shapley] V(S=[1, 3]) = 28.3900%
+[2025-11-08 13:04:54] [INFO] -            [Shapley] V(S=[1, 2, 3]) = 27.4200%
+[2025-11-08 13:04:55] [INFO] -            [Shapley] V(S=[0, 2]) = 27.5000%
+[2025-11-08 13:04:57] [INFO] -            [Shapley] V(S=[0, 2, 3]) = 27.3200%
+[2025-11-08 13:04:58] [INFO] -            [Shapley] V(S=[0, 1, 2, 3]) = 28.5400%
+[2025-11-08 13:04:59] [INFO] -            [Shapley] V(S=[4]) = 29.3600%
+[2025-11-08 13:05:01] [INFO] -            [Shapley] V(S=[0, 4]) = 30.7100%
+[2025-11-08 13:05:02] [INFO] -            [Shapley] V(S=[0, 1, 4]) = 32.5300%
+[2025-11-08 13:05:04] [INFO] -            [Shapley] V(S=[2]) = 20.2200%
+[2025-11-08 13:05:05] [INFO] -            [Shapley] V(S=[1, 2]) = 26.1400%
+[2025-11-08 13:05:06] [INFO] -            [Shapley] V(S=[0, 1, 2]) = 28.6500%
+[2025-11-08 13:05:07] [INFO] -            [Shapley] V(S=[0, 1, 2, 4]) = 33.4700%
+[2025-11-08 13:05:09] [INFO] -            [Shapley] V(S=[0, 2, 4]) = 33.0500%
+[2025-11-08 13:05:10] [INFO] -            [Shapley] V(S=[0, 2, 3, 4]) = 31.6100%
+[2025-11-08 13:05:11] [INFO] -            [Shapley] V(S=[2, 4]) = 29.3900%
+[2025-11-08 13:05:13] [INFO] -            [Shapley] V(S=[0, 3, 4]) = 33.3000%
+[2025-11-08 13:05:13] [INFO] - [Server] Shapley Values (TMC) 算出完了:
+[2025-11-08 13:05:13] [INFO] -          Client 0: phi = 12.1715
+[2025-11-08 13:05:13] [INFO] -          Client 1: phi = 5.5010
+[2025-11-08 13:05:13] [INFO] -          Client 2: phi = 2.7730
+[2025-11-08 13:05:13] [INFO] -          Client 3: phi = 3.1955
+[2025-11-08 13:05:13] [INFO] -          Client 4: phi = 8.5590
+[2025-11-08 13:05:13] [INFO] - 
 [Server] Gradient-based Proxy Validation を開始...
-[2025-11-08 11:59:53] [INFO] - [Proxy Validation] 各クライアントの勾配貢献度 (C_i) を計算:
-[2025-11-08 11:59:53] [INFO] -          Client 0: C_i = 7.0254e-02
-[2025-11-08 11:59:53] [INFO] -          Client 1: C_i = 6.6270e-01
-[2025-11-08 11:59:53] [INFO] -          Client 2: C_i = 4.7830e-01
-[2025-11-08 11:59:53] [INFO] -          Client 3: C_i = 2.6090e+00
-[2025-11-08 11:59:53] [INFO] -          Client 4: C_i = 5.7424e-01
-[2025-11-08 11:59:53] [INFO] - 
+[2025-11-08 13:05:13] [INFO] - [Proxy Validation] 各クライアントの勾配貢献度 (C_i) を計算:
+[2025-11-08 13:05:13] [INFO] -          Client 0: C_i = 2.6631e+00
+[2025-11-08 13:05:13] [INFO] -          Client 1: C_i = 3.3775e+00
+[2025-11-08 13:05:13] [INFO] -          Client 2: C_i = 3.7746e+00
+[2025-11-08 13:05:13] [INFO] -          Client 3: C_i = 3.0121e+00
+[2025-11-08 13:05:13] [INFO] -          Client 4: C_i = -4.5462e-01
+[2025-11-08 13:05:13] [INFO] - 
 ========================================
-[2025-11-08 11:59:53] [INFO] - --- Gradient-based Proxy 検証結果 ---
-[2025-11-08 11:59:53] [INFO] - ========================================
-[2025-11-08 11:59:53] [INFO] - Client ID  | Phi (Shapley値)    | C_i (Proxyスコア)   
-[2025-11-08 11:59:53] [INFO] - ------------------------------------------------
-[2025-11-08 11:59:53] [INFO] - 0          | 9.5575            | 7.0254e-02       
-[2025-11-08 11:59:53] [INFO] - 1          | -1.1255           | 6.6270e-01       
-[2025-11-08 11:59:53] [INFO] - 2          | 5.7440            | 4.7830e-01       
-[2025-11-08 11:59:53] [INFO] - 3          | 7.0330            | 2.6090e+00       
-[2025-11-08 11:59:53] [INFO] - 4          | 5.6410            | 5.7424e-01       
-[2025-11-08 11:59:53] [INFO] - ------------------------------------------------
-[2025-11-08 11:59:53] [INFO] - 
+[2025-11-08 13:05:13] [INFO] - --- Gradient-based Proxy 検証結果 ---
+[2025-11-08 13:05:13] [INFO] - ========================================
+[2025-11-08 13:05:13] [INFO] - Client ID  | Phi (Shapley値)    | C_i (Proxyスコア)   
+[2025-11-08 13:05:13] [INFO] - ------------------------------------------------
+[2025-11-08 13:05:13] [INFO] - 0          | 12.1715           | 2.6631e+00       
+[2025-11-08 13:05:13] [INFO] - 1          | 5.5010            | 3.3775e+00       
+[2025-11-08 13:05:13] [INFO] - 2          | 2.7730            | 3.7746e+00       
+[2025-11-08 13:05:13] [INFO] - 3          | 3.1955            | 3.0121e+00       
+[2025-11-08 13:05:13] [INFO] - 4          | 8.5590            | -4.5462e-01      
+[2025-11-08 13:05:13] [INFO] - ------------------------------------------------
+[2025-11-08 13:05:13] [INFO] - 
 [相関分析結果]
-[2025-11-08 11:59:53] [INFO] - スピアマン相関係数 (rho) : -0.4000 (p-value: 0.5046)
-[2025-11-08 11:59:53] [INFO] - 
+[2025-11-08 13:05:13] [INFO] - スピアマン相関係数 (rho) : -0.8000 (p-value: 0.1041)
+[2025-11-08 13:05:13] [INFO] - 
 [結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。
-[2025-11-08 11:59:53] [INFO] - 
+[2025-11-08 13:05:13] [INFO] - 
 [Main] Round 20: グローバルテスト精度を計算中...
-[2025-11-08 11:59:55] [INFO] - ====== [Main] Round 20 Global Test Accuracy: 26.8500% ======
-[2025-11-08 11:59:55] [INFO] - ------------------------------
-[2025-11-08 11:59:55] [INFO] - --- [パート1] 学習完了 --- (総所要時間: 518.93 秒)
-[2025-11-08 11:59:55] [INFO] - 
+[2025-11-08 13:05:14] [INFO] - ====== [Main] Round 20 Global Test Accuracy: 32.2000% ======
+[2025-11-08 13:05:14] [INFO] - ------------------------------
+[2025-11-08 13:05:14] [INFO] - --- [パート1] 学習完了 --- (総所要時間: 512.18 秒)
+[2025-11-08 13:05:14] [INFO] - 
 [Main] すべての処理が完了しました。
