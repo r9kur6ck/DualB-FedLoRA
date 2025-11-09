@@ -13,7 +13,7 @@ from scipy.stats import pearsonr, spearmanr
 import json 
 import logging 
 import sys 
-import os # ★ 1. osモジュールをインポート
+import os 
 
 # --- 0. ★ ロギング設定 ---
 def setup_logging(logfile='experiment_fixed_b_resnet.log'): 
@@ -270,9 +270,12 @@ class FixedBServer:
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
                 total += len(target)
-        v_s_accuracy = 100. * correct / total if total > 0 else 0
+        
+        # ★★★ 修正 ★★★
+        v_i_accuracy = 100. * correct / total if total > 0 else 0 # v_s_accuracy -> v_i_accuracy
         logging.info(f"           [LocalAcc Eval] Client {client_id} (A_i only) Test Acc = {v_i_accuracy:.4f}%")
         return v_i_accuracy
+        # ★★★ 修正ここまで ★★★
 
     def run_local_accuracy_validation(self):
         if not self.final_shapley_values:
@@ -422,11 +425,10 @@ if __name__ == "__main__":
             config = yaml.safe_load(f)
     except FileNotFoundError:
         try:
-            # (フォールバック) ルートから python resnet/main_fixed_b_resnet.py として実行された場合
             with open("config.yml", 'r') as f:
                 config = yaml.safe_load(f)
             CONFIG_PATH = "config.yml"
-            SCRIPT_DIR = "." # スクリプトの場所をルートとして扱う
+            SCRIPT_DIR = "." 
         except FileNotFoundError:
             print(f"[FATAL] config.yml が見つかりません。パスを確認: {CONFIG_PATH}")
             exit()
@@ -440,7 +442,7 @@ if __name__ == "__main__":
     os.makedirs(LOG_DIR, exist_ok=True)
     
     experiment_name = config.get('experiment_name', 'experiment')
-    log_filename = f"{experiment_name}_resnet_fixed.log" # スクリプト固有の名前に
+    log_filename = f"{experiment_name}_resnet_fixed.log" 
     LOG_PATH = os.path.join(LOG_DIR, log_filename)
     
     setup_logging(logfile=LOG_PATH)
@@ -454,12 +456,11 @@ if __name__ == "__main__":
     
     logging.info("\n[Main] 共通データセットを準備します...")
     
-    # ★ 5. config から image_size を読み込む (デフォルト 128)
     image_size = config.get('image_size', 128)
     logging.info(f"[Main] 入力解像度を {image_size}x{image_size} に設定します。")
     
     transform = transforms.Compose([
-        transforms.Resize((image_size, image_size)), # ★ 変数を使用
+        transforms.Resize((image_size, image_size)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -487,7 +488,6 @@ if __name__ == "__main__":
         'device': device
     }
 
-    # config の値を使って実行
     final_shapley_values = run_main_training(config, all_datasets)
     
     logging.info("\n[Main] すべての処理が完了しました。")
