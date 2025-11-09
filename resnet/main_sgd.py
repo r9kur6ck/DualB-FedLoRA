@@ -13,7 +13,7 @@ from scipy.stats import pearsonr, spearmanr
 import json 
 import logging 
 import sys 
-import os # ★ 1. osモジュールをインポート
+import os 
 
 # --- 0. ★ ロギング設定 ---
 def setup_logging(logfile='experiment_fedsgd_resnet.log'): 
@@ -163,8 +163,6 @@ class FedSGDServer:
         self.all_Gradients_B = [] 
         logging.info(f"[Server] FedSGD (B-update) サーバを初期化しました (lr={server_lr})。")
 
-    # (aggregate_and_update, evaluate_coalition, compute_shapley_tmc, 
-    #  run_gradient_proxy_validation は変更なし)
     def aggregate_and_update(self, compute_shapley_round, mc_iterations):
         if not self.all_Gradients_B:
             logging.warning("[Server] 更新するBの勾配がありません。")
@@ -178,11 +176,19 @@ class FedSGDServer:
         self.B_server_state['B_server_fc1'].grad = g_B_global
         self.optimizer.step()
         logging.info(f"         [Server] FedSGD Update: B_server を更新しました (Grad Norm: {g_B_global.norm():.4f})")
+        
         if compute_shapley_round:
             logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
             self.compute_shapley_tmc(self.all_A_states, self.B_server_state, mc_iterations=mc_iterations)
-            logging.info("\n[Server] Gradient-based Proxy Validation を開始...")
+            
+            logging.info("\n[Server] (検証1) Gradient-based Proxy Validation を開始...")
             self.run_gradient_proxy_validation()
+            
+            # ★★★ 新しい検証を追加 ★★★
+            logging.info("\n[Server] (検証2) Local Accuracy vs Shapley Validation を開始...")
+            self.run_local_accuracy_validation()
+            # ★★★★★★★★★★★★★★★★
+            
         self.v_cache.clear()
 
     def evaluate_coalition(self, coalition_client_ids, b_server_state):
@@ -256,7 +262,7 @@ class FedSGDServer:
                 phi_values.append(self.final_shapley_values[cid])
                 c_values.append(proxy_scores_C_i[cid])
         logging.info("\n" + "=" * 40)
-        logging.info("--- Gradient-based Proxy 検証結果 ---")
+        logging.info("--- (検証1) Gradient-based Proxy 検証結果 ---")
         logging.info("=" * 40)
         logging.info(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'C_i (Proxyスコア)':<17}")
         logging.info("-" * 48)
@@ -267,14 +273,71 @@ class FedSGDServer:
             logging.warning("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
         else:
             corr, p_val = spearmanr(phi_values, c_values)
-            logging.info("\n[相関分析結果]")
+            logging.info("\n[相関分析結果 (Proxy vs Phi)]")
             logging.info(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})")
             if corr > 0.8:
-                logging.info("\n[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。")
+                logging.info("\n[結論] 強い正の相関 (rho > 0.8)。")
             elif corr > 0.5:
-                 logging.info("\n[結論] 正の相関が見られますが、基準 (rho > 0.8) には達していません。")
+                 logging.info("\n[結論] 正の相関が見られます。")
             else:
-                logging.info("\n[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。")
+                logging.info("\n[結論] 相関が低いか負です。")
+
+    # ★★★ ここから新しい関数 (main_fixed_b_resnet.py からコピー) ★★★
+    def evaluate_individual_client_performance(self, client_id):
+        if client_id not in self.all_A_states:
+            logging.warning(f"[LocalAcc Eval] Client {client_id} の A_state がありません。")
+            return 0.0
+        A_i_state = self.all_A_states[client_id]
+        A_i_fc1 = A_i_state['A_fc1']
+        eval_model = copy.deepcopy(self.base_model)
+        eval_model.lora_fc1.A.data = A_i_fc1 
+        eval_model.eval()
+        correct, total = 0, 0
+        with torch.no_grad():
+            for data, target in self.test_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output = eval_model(data, b_server_fc1=self.B_server_state['B_server_fc1'])
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+                total += len(target)
+        
+        # ★ バグ修正: v_s_accuracy -> v_i_accuracy
+        v_i_accuracy = 100. * correct / total if total > 0 else 0 
+        logging.info(f"           [LocalAcc Eval] Client {client_id} (A_i only) Test Acc = {v_i_accuracy:.4f}%")
+        return v_i_accuracy
+
+    def run_local_accuracy_validation(self):
+        if not self.final_shapley_values:
+            logging.error("[LocalAcc Validation] Error: 比較対象のShapley値がありません。")
+            return
+        local_accuracies = []
+        client_ids = sorted(self.final_shapley_values.keys())
+        logging.info("[LocalAcc Validation] 各クライアントの個別テスト精度 (Local Acc) を計算:")
+        for cid in client_ids:
+            local_acc = self.evaluate_individual_client_performance(cid)
+            local_accuracies.append(local_acc)
+        phi_values = [self.final_shapley_values[cid] for cid in client_ids]
+        logging.info("\n" + "=" * 40)
+        logging.info("--- (検証2) Local Accuracy vs Shapley 検証結果 ---")
+        logging.info("=" * 40)
+        logging.info(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'Local Acc (個別精度)':<17}")
+        logging.info("-" * 50)
+        for i in range(len(client_ids)):
+            logging.info(f"{client_ids[i]:<10} | {phi_values[i]:<17.4f} | {local_accuracies[i]:<17.4f}%")
+        logging.info("-" * 50)
+        if len(phi_values) < 2 or np.std(phi_values) == 0 or np.std(local_accuracies) == 0:
+            logging.warning("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
+        else:
+            corr, p_val = spearmanr(phi_values, local_accuracies)
+            logging.info("\n[相関分析結果 (Local Acc vs Phi)]")
+            logging.info(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})")
+            if corr > 0.8:
+                logging.info("\n[結論] 強い正の相関。Shapley値は個別のA_iの性能をよく反映しています。")
+            elif corr > 0.0:
+                logging.info("\n[結論] 正の相関が見られます。")
+            else:
+                logging.info("\n[結論] 相関が低いか負であり、Shapley値は個別のA_iの性能を反映していません。")
+    # ★★★ ここまで新しい関数 ★★★
 
     def evaluate_global_model(self):
         if not self.all_A_states: 
@@ -400,7 +463,6 @@ if __name__ == "__main__":
         with open(CONFIG_PATH, 'r') as f:
             config = yaml.safe_load(f)
     except FileNotFoundError:
-        # (フォールバック) ルートから python resnet/main_sgd.py として実行された場合
         try:
             with open("config.yml", 'r') as f:
                 config = yaml.safe_load(f)
@@ -433,12 +495,11 @@ if __name__ == "__main__":
     
     logging.info("\n[Main] 共通データセットを準備します...")
     
-    # ★ 5. config から image_size を読み込む (デフォルト 128)
     image_size = config.get('image_size', 128)
     logging.info(f"[Main] 入力解像度を {image_size}x{image_size} に設定します。")
     
     transform = transforms.Compose([
-        transforms.Resize((image_size, image_size)), # ★ 変数を使用
+        transforms.Resize((image_size, image_size)), 
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -466,7 +527,6 @@ if __name__ == "__main__":
         'device': device
     }
 
-    # config の値を使って実行
     final_shapley_values = run_main_training(config, all_datasets)
     
     logging.info("\n[Main] すべての処理が完了しました。")
