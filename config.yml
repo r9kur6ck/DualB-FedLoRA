@@ -1,5 +1,5 @@
 # config.yml
-# Hyperparameters for FedSGD-LoRA (ViT Multi-Layer)
+# Hyperparameters for FedSGD-LoRA (ResNet-50)
 
 # --- Experiment Settings ---
 num_clients: 5
@@ -9,10 +9,7 @@ non_iid_alpha: 0.3
 
 # --- LoRA Settings ---
 rank: 4
-# ★ 修正: LoRA化するモジュールを選択
-# 'mlp' (ViTの全Transformerブロック内MLP層)
-# 'head' (最後の分類ヘッド)
-lora_target_modules: ['mlp', 'head']
+# (lora_target_modules は、この実装では使いません)
 
 # --- Learning Rate Settings ---
 server_lr: 0.1
