@@ -1,0 +1,424 @@
+[2025-11-09 13:56:46] [INFO] - [Main] /home/miyata/LoRA_Kuroki/DualB-FedLoRA/resnet/../config.yml から設定をロードしました。
+[2025-11-09 13:56:46] [INFO] - Loaded config:
+{
+  "experiment_name": "01",
+  "num_clients": 5,
+  "num_rounds": 20,
+  "local_epochs": 2,
+  "non_iid_alpha": 0.3,
+  "eval_interval": 1,
+  "rank": 4,
+  "image_size": 64,
+  "lora_target_modules": [
+    "mlp",
+    "head"
+  ],
+  "client_lr": 0.01,
+  "server_lr": 0.1,
+  "spsa_eta_b": 0.0001,
+  "spsa_epsilon": 0.1,
+  "server_momentum": 0.9,
+  "shapley_tmc_iterations": 20,
+  "proxy_validation_type": "g_A"
+}
+[2025-11-09 13:56:46] [INFO] - 
+[Main] Using device: cuda
+[2025-11-09 13:56:46] [INFO] - 
+[Main] 共通データセットを準備します...
+[2025-11-09 13:56:46] [INFO] - [Main] 入力解像度を 64x64 に設定します。
+[2025-11-09 13:56:47] [INFO] - [Data] Non-IIDデータ分割を開始 (Alpha=0.3)...
+[2025-11-09 13:56:47] [INFO] - [Data] 5 クライアント分のデータローダーを作成完了。
+[2025-11-09 13:56:47] [INFO] - [Main] テストローダーのバッチサイズ: 64
+[2025-11-09 13:56:47] [INFO] - --- [パート1] FedSGD (B-update) (ResNet版) ---
+[2025-11-09 13:56:47] [INFO] - Clients: 5, Rounds: 20, Rank: 4
+[2025-11-09 13:56:47] [INFO] - ------------------------------
+[2025-11-09 13:56:47] [INFO] - [Model] ResNet-50 (ImageNet-1k) をロード中...
+[2025-11-09 13:56:48] [INFO] - [Model] ResNet-50ロード完了。分類ヘッド (Linear 2048->10) をLoRA化 (Rank=4)。
+[2025-11-09 13:56:48] [INFO] - [Server] FedSGD (B-update) サーバを初期化しました (lr=0.1)。
+[2025-11-09 13:56:48] [INFO] - [Main] Client LR: 0.01
+[2025-11-09 13:56:49] [INFO] - [Main] 5 クライアントの初期化完了。
+[2025-11-09 13:56:49] [INFO] - ------------------------------
+[2025-11-09 13:56:49] [INFO] - [Main] グローバルテスト精度を 1 ラウンドごとに計算します。
+[2025-11-09 13:56:49] [INFO] - 
+--- Round 1/20 ---
+[2025-11-09 13:57:10] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.4445
+[2025-11-09 13:57:23] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.7823
+[2025-11-09 13:57:32] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.7357
+[2025-11-09 13:58:04] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.4544
+[2025-11-09 13:58:34] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.5111
+[2025-11-09 13:58:34] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.5236)
+[2025-11-09 13:58:34] [INFO] - 
+[Main] Round 1: グローバルテスト精度を計算中...
+[2025-11-09 13:58:38] [INFO] - ====== [Main] Round 1 Global Test Accuracy: 41.4900% ======
+[2025-11-09 13:58:38] [INFO] - 
+--- Round 2/20 ---
+[2025-11-09 13:58:59] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.1694
+[2025-11-09 13:59:10] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.5103
+[2025-11-09 13:59:20] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.4128
+[2025-11-09 13:59:53] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.1669
+[2025-11-09 14:00:22] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.2762
+[2025-11-09 14:00:22] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.6772)
+[2025-11-09 14:00:22] [INFO] - 
+[Main] Round 2: グローバルテスト精度を計算中...
+[2025-11-09 14:00:26] [INFO] - ====== [Main] Round 2 Global Test Accuracy: 47.9400% ======
+[2025-11-09 14:00:26] [INFO] - 
+--- Round 3/20 ---
+[2025-11-09 14:00:46] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0879
+[2025-11-09 14:00:59] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.3630
+[2025-11-09 14:01:09] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.2428
+[2025-11-09 14:01:41] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.1007
+[2025-11-09 14:02:11] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.1627
+[2025-11-09 14:02:11] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.6556)
+[2025-11-09 14:02:11] [INFO] - 
+[Main] Round 3: グローバルテスト精度を計算中...
+[2025-11-09 14:02:14] [INFO] - ====== [Main] Round 3 Global Test Accuracy: 51.3300% ======
+[2025-11-09 14:02:14] [INFO] - 
+--- Round 4/20 ---
+[2025-11-09 14:02:34] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 1.0073
+[2025-11-09 14:02:46] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.2889
+[2025-11-09 14:02:56] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.1356
+[2025-11-09 14:03:29] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.0499
+[2025-11-09 14:03:58] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.0876
+[2025-11-09 14:03:58] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.7290)
+[2025-11-09 14:03:58] [INFO] - 
+[Main] Round 4: グローバルテスト精度を計算中...
+[2025-11-09 14:04:02] [INFO] - ====== [Main] Round 4 Global Test Accuracy: 53.9700% ======
+[2025-11-09 14:04:02] [INFO] - 
+--- Round 5/20 ---
+[2025-11-09 14:04:23] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.9703
+[2025-11-09 14:04:35] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.1998
+[2025-11-09 14:04:45] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 1.0396
+[2025-11-09 14:05:18] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 1.0149
+[2025-11-09 14:05:47] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 1.0381
+[2025-11-09 14:05:47] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 1.0388)
+[2025-11-09 14:05:47] [INFO] - 
+[Main] Round 5: グローバルテスト精度を計算中...
+[2025-11-09 14:05:51] [INFO] - ====== [Main] Round 5 Global Test Accuracy: 55.2500% ======
+[2025-11-09 14:05:51] [INFO] - 
+--- Round 6/20 ---
+[2025-11-09 14:06:11] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.9528
+[2025-11-09 14:06:23] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.1448
+[2025-11-09 14:06:33] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.9145
+[2025-11-09 14:07:06] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.9935
+[2025-11-09 14:07:35] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.9886
+[2025-11-09 14:07:35] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.5277)
+[2025-11-09 14:07:35] [INFO] - 
+[Main] Round 6: グローバルテスト精度を計算中...
+[2025-11-09 14:07:39] [INFO] - ====== [Main] Round 6 Global Test Accuracy: 57.1500% ======
+[2025-11-09 14:07:39] [INFO] - 
+--- Round 7/20 ---
+[2025-11-09 14:08:00] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.9092
+[2025-11-09 14:08:12] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.1033
+[2025-11-09 14:08:22] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.8607
+[2025-11-09 14:08:54] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.9667
+[2025-11-09 14:09:24] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.9681
+[2025-11-09 14:09:24] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.7145)
+[2025-11-09 14:09:24] [INFO] - 
+[Main] Round 7: グローバルテスト精度を計算中...
+[2025-11-09 14:09:27] [INFO] - ====== [Main] Round 7 Global Test Accuracy: 57.9800% ======
+[2025-11-09 14:09:27] [INFO] - 
+--- Round 8/20 ---
+[2025-11-09 14:09:47] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.8642
+[2025-11-09 14:10:00] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.0574
+[2025-11-09 14:10:09] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.8518
+[2025-11-09 14:10:42] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.9446
+[2025-11-09 14:11:12] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.9484
+[2025-11-09 14:11:12] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.9384)
+[2025-11-09 14:11:12] [INFO] - 
+[Main] Round 8: グローバルテスト精度を計算中...
+[2025-11-09 14:11:15] [INFO] - ====== [Main] Round 8 Global Test Accuracy: 59.4200% ======
+[2025-11-09 14:11:15] [INFO] - 
+--- Round 9/20 ---
+[2025-11-09 14:11:36] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.8237
+[2025-11-09 14:11:48] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.0257
+[2025-11-09 14:11:58] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.8233
+[2025-11-09 14:12:30] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.9195
+[2025-11-09 14:13:00] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.9093
+[2025-11-09 14:13:00] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.6073)
+[2025-11-09 14:13:00] [INFO] - 
+[Main] Round 9: グローバルテスト精度を計算中...
+[2025-11-09 14:13:03] [INFO] - ====== [Main] Round 9 Global Test Accuracy: 60.3400% ======
+[2025-11-09 14:13:03] [INFO] - 
+--- Round 10/20 ---
+[2025-11-09 14:13:24] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.8130
+[2025-11-09 14:13:37] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.0166
+[2025-11-09 14:13:46] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.7707
+[2025-11-09 14:14:19] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.9008
+[2025-11-09 14:14:48] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8976
+[2025-11-09 14:14:48] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.7370)
+[2025-11-09 14:14:48] [INFO] - 
+[Main] Round 10: グローバルテスト精度を計算中...
+[2025-11-09 14:14:51] [INFO] - ====== [Main] Round 10 Global Test Accuracy: 60.0000% ======
+[2025-11-09 14:14:51] [INFO] - 
+--- Round 11/20 ---
+[2025-11-09 14:15:03] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.7814
+[2025-11-09 14:15:10] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 1.0203
+[2025-11-09 14:15:17] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.7531
+[2025-11-09 14:15:37] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8926
+[2025-11-09 14:15:56] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8677
+[2025-11-09 14:15:56] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.5490)
+[2025-11-09 14:15:56] [INFO] - 
+[Main] Round 11: グローバルテスト精度を計算中...
+[2025-11-09 14:15:57] [INFO] - ====== [Main] Round 11 Global Test Accuracy: 60.9400% ======
+[2025-11-09 14:15:57] [INFO] - 
+--- Round 12/20 ---
+[2025-11-09 14:16:10] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.7536
+[2025-11-09 14:16:18] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.9889
+[2025-11-09 14:16:24] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.7437
+[2025-11-09 14:16:44] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8760
+[2025-11-09 14:17:02] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8603
+[2025-11-09 14:17:02] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.7534)
+[2025-11-09 14:17:02] [INFO] - 
+[Main] Round 12: グローバルテスト精度を計算中...
+[2025-11-09 14:17:06] [INFO] - ====== [Main] Round 12 Global Test Accuracy: 61.1200% ======
+[2025-11-09 14:17:06] [INFO] - 
+--- Round 13/20 ---
+[2025-11-09 14:17:27] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.7478
+[2025-11-09 14:17:38] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.9285
+[2025-11-09 14:17:47] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.7327
+[2025-11-09 14:18:14] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8644
+[2025-11-09 14:18:34] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8465
+[2025-11-09 14:18:34] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.5718)
+[2025-11-09 14:18:34] [INFO] - 
+[Main] Round 13: グローバルテスト精度を計算中...
+[2025-11-09 14:18:36] [INFO] - ====== [Main] Round 13 Global Test Accuracy: 61.9500% ======
+[2025-11-09 14:18:36] [INFO] - 
+--- Round 14/20 ---
+[2025-11-09 14:18:49] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.7434
+[2025-11-09 14:18:57] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.9439
+[2025-11-09 14:19:03] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.7010
+[2025-11-09 14:19:23] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8464
+[2025-11-09 14:19:41] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8442
+[2025-11-09 14:19:41] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.8971)
+[2025-11-09 14:19:41] [INFO] - 
+[Main] Round 14: グローバルテスト精度を計算中...
+[2025-11-09 14:19:44] [INFO] - ====== [Main] Round 14 Global Test Accuracy: 62.0500% ======
+[2025-11-09 14:19:44] [INFO] - 
+--- Round 15/20 ---
+[2025-11-09 14:19:56] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.7114
+[2025-11-09 14:20:04] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.9486
+[2025-11-09 14:20:10] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.7091
+[2025-11-09 14:20:30] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8328
+[2025-11-09 14:20:47] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8384
+[2025-11-09 14:20:47] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.6448)
+[2025-11-09 14:20:47] [INFO] - 
+[Main] Round 15: グローバルテスト精度を計算中...
+[2025-11-09 14:20:50] [INFO] - ====== [Main] Round 15 Global Test Accuracy: 63.3700% ======
+[2025-11-09 14:20:50] [INFO] - 
+--- Round 16/20 ---
+[2025-11-09 14:21:03] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.6996
+[2025-11-09 14:21:10] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.9350
+[2025-11-09 14:21:16] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.7048
+[2025-11-09 14:21:37] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8328
+[2025-11-09 14:21:55] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8302
+[2025-11-09 14:21:55] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.8367)
+[2025-11-09 14:21:55] [INFO] - 
+[Main] Round 16: グローバルテスト精度を計算中...
+[2025-11-09 14:21:57] [INFO] - ====== [Main] Round 16 Global Test Accuracy: 62.3500% ======
+[2025-11-09 14:21:57] [INFO] - 
+--- Round 17/20 ---
+[2025-11-09 14:22:10] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.6873
+[2025-11-09 14:22:18] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.9221
+[2025-11-09 14:22:24] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.6882
+[2025-11-09 14:22:44] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8335
+[2025-11-09 14:23:02] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8026
+[2025-11-09 14:23:02] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.5647)
+[2025-11-09 14:23:02] [INFO] - 
+[Main] Round 17: グローバルテスト精度を計算中...
+[2025-11-09 14:23:05] [INFO] - ====== [Main] Round 17 Global Test Accuracy: 63.7000% ======
+[2025-11-09 14:23:05] [INFO] - 
+--- Round 18/20 ---
+[2025-11-09 14:23:17] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.6754
+[2025-11-09 14:23:25] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.8773
+[2025-11-09 14:23:31] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.6777
+[2025-11-09 14:23:51] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8214
+[2025-11-09 14:24:10] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.8024
+[2025-11-09 14:24:10] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.8251)
+[2025-11-09 14:24:10] [INFO] - 
+[Main] Round 18: グローバルテスト精度を計算中...
+[2025-11-09 14:24:12] [INFO] - ====== [Main] Round 18 Global Test Accuracy: 63.4300% ======
+[2025-11-09 14:24:12] [INFO] - 
+--- Round 19/20 ---
+[2025-11-09 14:24:25] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.6790
+[2025-11-09 14:24:32] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.8538
+[2025-11-09 14:24:38] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.6807
+[2025-11-09 14:24:58] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8244
+[2025-11-09 14:25:16] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.7928
+[2025-11-09 14:25:16] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.8428)
+[2025-11-09 14:25:16] [INFO] - 
+[Main] Round 19: グローバルテスト精度を計算中...
+[2025-11-09 14:25:19] [INFO] - ====== [Main] Round 19 Global Test Accuracy: 63.6600% ======
+[2025-11-09 14:25:19] [INFO] - 
+--- Round 20/20 ---
+[2025-11-09 14:25:31] [INFO] -   [Client 0] Local Train (A only): Avg Loss = 0.6716
+[2025-11-09 14:25:39] [INFO] -   [Client 1] Local Train (A only): Avg Loss = 0.8459
+[2025-11-09 14:25:45] [INFO] -   [Client 2] Local Train (A only): Avg Loss = 0.6528
+[2025-11-09 14:26:04] [INFO] -   [Client 3] Local Train (A only): Avg Loss = 0.8199
+[2025-11-09 14:26:23] [INFO] -   [Client 4] Local Train (A only): Avg Loss = 0.7977
+[2025-11-09 14:26:23] [INFO] -          [Server] FedSGD Update: B_server を更新しました (Grad Norm: 0.8171)
+[2025-11-09 14:26:23] [INFO] - 
+[Server] Shapley値 (TMC) の計算を開始...
+[2025-11-09 14:26:23] [INFO] -            [Shapley] TMC-Shapley (T=20) 開始...
+[2025-11-09 14:26:25] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:26:28] [INFO] -            [Shapley] V(S=[2, 4]) = 51.0400%
+[2025-11-09 14:26:31] [INFO] -            [Shapley] V(S=[0, 2, 4]) = 55.0100%
+[2025-11-09 14:26:33] [INFO] -            [Shapley] V(S=[0, 2, 3, 4]) = 62.3800%
+[2025-11-09 14:26:35] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:26:38] [INFO] -            [Shapley] V(S=[3]) = 47.2000%
+[2025-11-09 14:26:41] [INFO] -            [Shapley] V(S=[3, 4]) = 48.1800%
+[2025-11-09 14:26:44] [INFO] -            [Shapley] V(S=[1, 3, 4]) = 55.7800%
+[2025-11-09 14:26:47] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 60.3100%
+[2025-11-09 14:26:50] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:26:54] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:26:57] [INFO] -            [Shapley] V(S=[1, 2]) = 47.5700%
+[2025-11-09 14:27:00] [INFO] -            [Shapley] V(S=[1, 2, 3]) = 56.2800%
+[2025-11-09 14:27:03] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 60.3100%
+[2025-11-09 14:27:05] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:27:08] [INFO] -            [Shapley] V(S=[3]) = 47.2000%
+[2025-11-09 14:27:11] [INFO] -            [Shapley] V(S=[0, 3]) = 59.6700%
+[2025-11-09 14:27:14] [INFO] -            [Shapley] V(S=[0, 3, 4]) = 61.4600%
+[2025-11-09 14:27:17] [INFO] -            [Shapley] V(S=[0, 2, 3, 4]) = 62.3800%
+[2025-11-09 14:27:19] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:27:22] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:27:25] [INFO] -            [Shapley] V(S=[2, 4]) = 51.0400%
+[2025-11-09 14:27:27] [INFO] -            [Shapley] V(S=[1, 2, 4]) = 56.7000%
+[2025-11-09 14:27:29] [INFO] -            [Shapley] V(S=[0, 1, 2, 4]) = 58.2700%
+[2025-11-09 14:27:32] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:27:35] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:27:37] [INFO] -            [Shapley] V(S=[0, 2]) = 51.1600%
+[2025-11-09 14:27:40] [INFO] -            [Shapley] V(S=[0, 2, 3]) = 57.2900%
+[2025-11-09 14:27:43] [INFO] -            [Shapley] V(S=[0, 1, 2, 3]) = 59.1400%
+[2025-11-09 14:27:46] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:27:48] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:27:51] [INFO] -            [Shapley] V(S=[2, 3]) = 53.3200%
+[2025-11-09 14:27:53] [INFO] -            [Shapley] V(S=[1, 2, 3]) = 56.2800%
+[2025-11-09 14:27:56] [INFO] -            [Shapley] V(S=[0, 1, 2, 3]) = 59.1400%
+[2025-11-09 14:27:58] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:28:01] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:28:03] [INFO] -            [Shapley] V(S=[2, 3]) = 53.3200%
+[2025-11-09 14:28:06] [INFO] -            [Shapley] V(S=[1, 2, 3]) = 56.2800%
+[2025-11-09 14:28:08] [INFO] -            [Shapley] V(S=[0, 1, 2, 3]) = 59.1400%
+[2025-11-09 14:28:10] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:28:13] [INFO] -            [Shapley] V(S=[1]) = 40.1500%
+[2025-11-09 14:28:15] [INFO] -            [Shapley] V(S=[1, 3]) = 54.7400%
+[2025-11-09 14:28:18] [INFO] -            [Shapley] V(S=[1, 3, 4]) = 55.7800%
+[2025-11-09 14:28:20] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 60.3100%
+[2025-11-09 14:28:23] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:28:25] [INFO] -            [Shapley] V(S=[3]) = 47.2000%
+[2025-11-09 14:28:28] [INFO] -            [Shapley] V(S=[2, 3]) = 53.3200%
+[2025-11-09 14:28:30] [INFO] -            [Shapley] V(S=[0, 2, 3]) = 57.2900%
+[2025-11-09 14:28:33] [INFO] -            [Shapley] V(S=[0, 1, 2, 3]) = 59.1400%
+[2025-11-09 14:28:36] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:28:39] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:28:42] [INFO] -            [Shapley] V(S=[1, 2]) = 47.5700%
+[2025-11-09 14:28:45] [INFO] -            [Shapley] V(S=[1, 2, 4]) = 56.7000%
+[2025-11-09 14:28:48] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 60.3100%
+[2025-11-09 14:28:51] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:28:54] [INFO] -            [Shapley] V(S=[1]) = 40.1500%
+[2025-11-09 14:28:56] [INFO] -            [Shapley] V(S=[1, 4]) = 52.6900%
+[2025-11-09 14:28:59] [INFO] -            [Shapley] V(S=[1, 3, 4]) = 55.7800%
+[2025-11-09 14:29:01] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 60.3100%
+[2025-11-09 14:29:04] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:29:06] [INFO] -            [Shapley] V(S=[0]) = 50.8300%
+[2025-11-09 14:29:08] [INFO] -            [Shapley] V(S=[0, 3]) = 59.6700%
+[2025-11-09 14:29:11] [INFO] -            [Shapley] V(S=[0, 3, 4]) = 61.4600%
+[2025-11-09 14:29:13] [INFO] -            [Shapley] V(S=[0, 1, 3, 4]) = 63.3600%
+[2025-11-09 14:29:15] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:29:18] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:29:20] [INFO] -            [Shapley] V(S=[2, 3]) = 53.3200%
+[2025-11-09 14:29:22] [INFO] -            [Shapley] V(S=[2, 3, 4]) = 54.1600%
+[2025-11-09 14:29:25] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 60.3100%
+[2025-11-09 14:29:27] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:29:30] [INFO] -            [Shapley] V(S=[0]) = 50.8300%
+[2025-11-09 14:29:32] [INFO] -            [Shapley] V(S=[0, 4]) = 49.8200%
+[2025-11-09 14:29:35] [INFO] -            [Shapley] V(S=[0, 3, 4]) = 61.4600%
+[2025-11-09 14:29:37] [INFO] -            [Shapley] V(S=[0, 1, 3, 4]) = 63.3600%
+[2025-11-09 14:29:40] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:29:42] [INFO] -            [Shapley] V(S=[2]) = 42.4900%
+[2025-11-09 14:29:44] [INFO] -            [Shapley] V(S=[2, 3]) = 53.3200%
+[2025-11-09 14:29:47] [INFO] -            [Shapley] V(S=[0, 2, 3]) = 57.2900%
+[2025-11-09 14:29:49] [INFO] -            [Shapley] V(S=[0, 2, 3, 4]) = 62.3800%
+[2025-11-09 14:29:52] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:29:55] [INFO] -            [Shapley] V(S=[1]) = 40.1500%
+[2025-11-09 14:29:57] [INFO] -            [Shapley] V(S=[1, 4]) = 52.6900%
+[2025-11-09 14:30:00] [INFO] -            [Shapley] V(S=[1, 3, 4]) = 55.7800%
+[2025-11-09 14:30:02] [INFO] -            [Shapley] V(S=[1, 2, 3, 4]) = 60.3100%
+[2025-11-09 14:30:05] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:30:07] [INFO] -            [Shapley] V(S=[0]) = 50.8300%
+[2025-11-09 14:30:10] [INFO] -            [Shapley] V(S=[0, 1]) = 49.4800%
+[2025-11-09 14:30:12] [INFO] -            [Shapley] V(S=[0, 1, 2]) = 53.2800%
+[2025-11-09 14:30:14] [INFO] -            [Shapley] V(S=[0, 1, 2, 3]) = 59.1400%
+[2025-11-09 14:30:16] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:30:19] [INFO] -            [Shapley] V(S=[3]) = 47.2000%
+[2025-11-09 14:30:21] [INFO] -            [Shapley] V(S=[0, 3]) = 59.6700%
+[2025-11-09 14:30:24] [INFO] -            [Shapley] V(S=[0, 2, 3]) = 57.2900%
+[2025-11-09 14:30:26] [INFO] -            [Shapley] V(S=[0, 1, 2, 3]) = 59.1400%
+[2025-11-09 14:30:29] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:30:31] [INFO] -            [Shapley] V(S=[1]) = 40.1500%
+[2025-11-09 14:30:34] [INFO] -            [Shapley] V(S=[1, 2]) = 47.5700%
+[2025-11-09 14:30:36] [INFO] -            [Shapley] V(S=[1, 2, 4]) = 56.7000%
+[2025-11-09 14:30:39] [INFO] -            [Shapley] V(S=[0, 1, 2, 4]) = 58.2700%
+[2025-11-09 14:30:41] [INFO] -            [Shapley] V(S=[0, 1, 2, 3, 4]) = 63.7900%
+[2025-11-09 14:30:41] [INFO] - [Server] Shapley Values (TMC) 算出完了:
+[2025-11-09 14:30:41] [INFO] -          Client 0: phi = 11.5615
+[2025-11-09 14:30:41] [INFO] -          Client 1: phi = 10.4160
+[2025-11-09 14:30:41] [INFO] -          Client 2: phi = 20.8635
+[2025-11-09 14:30:41] [INFO] -          Client 3: phi = 15.8045
+[2025-11-09 14:30:41] [INFO] -          Client 4: phi = 5.1445
+[2025-11-09 14:30:41] [INFO] - 
+[Server] (検証1) Gradient-based Proxy Validation を開始...
+[2025-11-09 14:30:41] [INFO] - [Proxy Validation] 各クライアントの勾配貢献度 (C_i) を計算:
+[2025-11-09 14:30:41] [INFO] -          Client 0: C_i = 1.0708e+00
+[2025-11-09 14:30:41] [INFO] -          Client 1: C_i = 2.5631e-01
+[2025-11-09 14:30:41] [INFO] -          Client 2: C_i = 4.7031e-01
+[2025-11-09 14:30:41] [INFO] -          Client 3: C_i = 2.8644e-01
+[2025-11-09 14:30:41] [INFO] -          Client 4: C_i = 1.2043e-01
+[2025-11-09 14:30:41] [INFO] - 
+========================================
+[2025-11-09 14:30:41] [INFO] - --- (検証1) Gradient-based Proxy 検証結果 ---
+[2025-11-09 14:30:41] [INFO] - ========================================
+[2025-11-09 14:30:41] [INFO] - Client ID  | Phi (Shapley値)    | C_i (Proxyスコア)   
+[2025-11-09 14:30:41] [INFO] - ------------------------------------------------
+[2025-11-09 14:30:41] [INFO] - 0          | 11.5615           | 1.0708e+00       
+[2025-11-09 14:30:41] [INFO] - 1          | 10.4160           | 2.5631e-01       
+[2025-11-09 14:30:41] [INFO] - 2          | 20.8635           | 4.7031e-01       
+[2025-11-09 14:30:41] [INFO] - 3          | 15.8045           | 2.8644e-01       
+[2025-11-09 14:30:41] [INFO] - 4          | 5.1445            | 1.2043e-01       
+[2025-11-09 14:30:41] [INFO] - ------------------------------------------------
+[2025-11-09 14:30:41] [INFO] - 
+[相関分析結果 (Proxy vs Phi)]
+[2025-11-09 14:30:41] [INFO] - スピアマン相関係数 (rho) : 0.7000 (p-value: 0.1881)
+[2025-11-09 14:30:41] [INFO] - 
+[結論] 正の相関が見られます。
+[2025-11-09 14:30:41] [INFO] - 
+[Server] (検証2) Local Accuracy vs Shapley Validation を開始...
+[2025-11-09 14:30:41] [INFO] - [LocalAcc Validation] 各クライアントの個別テスト精度 (Local Acc) を計算:
+[2025-11-09 14:30:45] [INFO] -            [LocalAcc Eval] Client 0 (A_i only) Test Acc = 50.8300%
+[2025-11-09 14:30:47] [INFO] -            [LocalAcc Eval] Client 1 (A_i only) Test Acc = 40.1500%
+[2025-11-09 14:30:49] [INFO] -            [LocalAcc Eval] Client 2 (A_i only) Test Acc = 42.4900%
+[2025-11-09 14:30:52] [INFO] -            [LocalAcc Eval] Client 3 (A_i only) Test Acc = 47.2000%
+[2025-11-09 14:30:55] [INFO] -            [LocalAcc Eval] Client 4 (A_i only) Test Acc = 49.4200%
+[2025-11-09 14:30:55] [INFO] - 
+========================================
+[2025-11-09 14:30:55] [INFO] - --- (検証2) Local Accuracy vs Shapley 検証結果 ---
+[2025-11-09 14:30:55] [INFO] - ========================================
+[2025-11-09 14:30:55] [INFO] - Client ID  | Phi (Shapley値)    | Local Acc (個別精度) 
+[2025-11-09 14:30:55] [INFO] - --------------------------------------------------
+[2025-11-09 14:30:55] [INFO] - 0          | 11.5615           | 50.8300          %
+[2025-11-09 14:30:55] [INFO] - 1          | 10.4160           | 40.1500          %
+[2025-11-09 14:30:55] [INFO] - 2          | 20.8635           | 42.4900          %
+[2025-11-09 14:30:55] [INFO] - 3          | 15.8045           | 47.2000          %
+[2025-11-09 14:30:55] [INFO] - 4          | 5.1445            | 49.4200          %
+[2025-11-09 14:30:55] [INFO] - --------------------------------------------------
+[2025-11-09 14:30:55] [INFO] - 
+[相関分析結果 (Local Acc vs Phi)]
+[2025-11-09 14:30:55] [INFO] - スピアマン相関係数 (rho) : -0.2000 (p-value: 0.7471)
+[2025-11-09 14:30:55] [INFO] - 
+[結論] 相関が低いか負であり、Shapley値は個別のA_iの性能を反映していません。
+[2025-11-09 14:30:55] [INFO] - 
+[Main] Round 20: グローバルテスト精度を計算中...
+[2025-11-09 14:30:59] [INFO] - ====== [Main] Round 20 Global Test Accuracy: 63.7900% ======
+[2025-11-09 14:30:59] [INFO] - ------------------------------
+[2025-11-09 14:30:59] [INFO] - --- [パート1] 学習完了 --- (総所要時間: 2050.25 秒)
+[2025-11-09 14:30:59] [INFO] - 
+[Main] すべての処理が完了しました。
