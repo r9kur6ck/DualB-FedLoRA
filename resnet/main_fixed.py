@@ -13,6 +13,7 @@ from scipy.stats import pearsonr, spearmanr
 import json 
 import logging 
 import sys 
+import os # ★ 1. osモジュールをインポート
 
 # --- 0. ★ ロギング設定 ---
 def setup_logging(logfile='experiment_fixed_b_resnet.log'): 
@@ -269,7 +270,7 @@ class FixedBServer:
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
                 total += len(target)
-        v_i_accuracy = 100. * correct / total if total > 0 else 0
+        v_s_accuracy = 100. * correct / total if total > 0 else 0
         logging.info(f"           [LocalAcc Eval] Client {client_id} (A_i only) Test Acc = {v_i_accuracy:.4f}%")
         return v_i_accuracy
 
@@ -332,21 +333,21 @@ class FixedBServer:
 # --- 5. [パート1] メイン学習 実行関数 ---
 def run_main_training(config, all_datasets):
     logging.info(f"--- [パート1] B-Fixed (ResNet) 版 ---")
-    logging.info(f"Clients: {config['num_clients']}, Rounds: {config['num_rounds']}, Rank: {config['rank']}")
+    logging.info(f"Clients: {config.get('num_clients', 5)}, Rounds: {config.get('num_rounds', 20)}, Rank: {config.get('rank', 4)}")
     logging.info("-" * 30)
 
     device = all_datasets['device']
     client_dataloaders = all_datasets['client_dataloaders']
     test_loader = all_datasets['test_loader']
     
-    base_model = ResNet_LoRA_Head(rank=config['rank'], num_classes=10).to(device)
+    base_model = ResNet_LoRA_Head(rank=config.get('rank', 4), num_classes=10).to(device)
     
     d_model = base_model.lora_fc1.original_layer.in_features
     k_model = base_model.lora_fc1.original_layer.out_features
     
     server = FixedBServer(
         base_model, 
-        rank=config['rank'], 
+        rank=config.get('rank', 4), 
         test_loader=test_loader, 
         device=device,
         d=d_model,
@@ -368,11 +369,11 @@ def run_main_training(config, all_datasets):
     logging.info("-" * 30)
 
     start_time = time.time()
-    eval_interval = config.get('eval_interval', 5)
+    eval_interval = config.get('eval_interval', 1)
     logging.info(f"[Main] グローバルテスト精度を {eval_interval} ラウンドごとに計算します。")
     
-    for t in range(config['num_rounds']):
-        logging.info(f"\n--- Round {t+1}/{config['num_rounds']} ---")
+    for t in range(config.get('num_rounds', 20)):
+        logging.info(f"\n--- Round {t+1}/{config.get('num_rounds', 20)} ---")
         server.clear_round_data()
         
         current_b_state = server.B_server_state 
@@ -381,7 +382,7 @@ def run_main_training(config, all_datasets):
             client = clients[i]
             
             g_A_i = client.local_train(
-                local_epochs=config['local_epochs'],
+                local_epochs=config.get('local_epochs', 2),
                 b_server_states=current_b_state
             )
             
@@ -389,14 +390,14 @@ def run_main_training(config, all_datasets):
             server.all_A_states[i] = A_i_state
             server.all_Gradients_A[i] = g_A_i 
 
-        compute_shapley_round = (t + 1) == config['num_rounds']
+        compute_shapley_round = (t + 1) == config.get('num_rounds', 20)
         
         server.aggregate_and_update(
             compute_shapley_round,
             mc_iterations=config.get('shapley_tmc_iterations', 20)
         )
 
-        if (t + 1) % eval_interval == 0 or (t + 1) == config['num_rounds']:
+        if (t + 1) % eval_interval == 0 or (t + 1) == config.get('num_rounds', 20):
             logging.info(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
             current_test_accuracy = server.evaluate_global_model()
             logging.info(f"====== [Main] Round {t+1} Global Test Accuracy: {current_test_accuracy:.4f}% ======")
@@ -410,29 +411,55 @@ def run_main_training(config, all_datasets):
 # --- 9. 統合メイン実行ブロック ---
 if __name__ == "__main__":
     
-    setup_logging(logfile='experiment_fixed_b_resnet.log') 
-    
-    config_file = "config.yml" 
+    # ★ 2. このスクリプトのディレクトリパスを取得
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    # ★ 3. ルートディレクトリ（親ディレクトリ）の config.yml を指す
+    CONFIG_PATH = os.path.join(SCRIPT_DIR, '..', 'config.yml')
+
+    config = {}
     try:
-        with open(config_file, 'r') as f:
+        with open(CONFIG_PATH, 'r') as f:
             config = yaml.safe_load(f)
-        logging.info(f"[Main] {config_file} から設定をロードしました。")
-        logging.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
     except FileNotFoundError:
-        logging.error(f"[Error] {config_file} が見つかりません。")
-        exit()
+        try:
+            # (フォールバック) ルートから python resnet/main_fixed_b_resnet.py として実行された場合
+            with open("config.yml", 'r') as f:
+                config = yaml.safe_load(f)
+            CONFIG_PATH = "config.yml"
+            SCRIPT_DIR = "." # スクリプトの場所をルートとして扱う
+        except FileNotFoundError:
+            print(f"[FATAL] config.yml が見つかりません。パスを確認: {CONFIG_PATH}")
+            exit()
     except Exception as e:
-        logging.error(f"[Error] {config_file} の読み込みに失敗しました: {e}")
+        print(f"[FATAL] {CONFIG_PATH} の読み込みに失敗しました: {e}")
         exit()
+
+    # ★ 4. ログファイルの出力先をルートの 'logs' フォルダに設定
+    ROOT_DIR = os.path.dirname(SCRIPT_DIR) if SCRIPT_DIR != "." else "."
+    LOG_DIR = os.path.join(ROOT_DIR, 'logs')
+    os.makedirs(LOG_DIR, exist_ok=True)
+    
+    experiment_name = config.get('experiment_name', 'experiment')
+    log_filename = f"{experiment_name}_resnet_fixed.log" # スクリプト固有の名前に
+    LOG_PATH = os.path.join(LOG_DIR, log_filename)
+    
+    setup_logging(logfile=LOG_PATH)
+    
+    # --- ここから通常の実行 ---
+    logging.info(f"[Main] {CONFIG_PATH} から設定をロードしました。")
+    logging.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"\n[Main] Using device: {device}")
     
     logging.info("\n[Main] 共通データセットを準備します...")
     
-    # ★★★ 修正: 128x128 に変更 ★★★
+    # ★ 5. config から image_size を読み込む (デフォルト 128)
+    image_size = config.get('image_size', 128)
+    logging.info(f"[Main] 入力解像度を {image_size}x{image_size} に設定します。")
+    
     transform = transforms.Compose([
-        transforms.Resize((128, 128)), # 224x224 から 128x128 に縮小
+        transforms.Resize((image_size, image_size)), # ★ 変数を使用
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -444,10 +471,13 @@ if __name__ == "__main__":
         logging.error(f"[Error] CIFAR-10データセットのダウンロードに失敗しました: {e}")
         exit()
         
-    client_dataloaders = get_non_iid_data(config['num_clients'], train_dataset, alpha=config['non_iid_alpha'])
-    test_loader = DataLoader(test_dataset, batch_size=64, num_workers=2, pin_memory=True) 
+    client_dataloaders = get_non_iid_data(config.get('num_clients', 5), train_dataset, alpha=config.get('non_iid_alpha', 0.3))
     
-    if len(client_dataloaders) != config['num_clients']:
+    batch_size = 32 if image_size > 128 else 64
+    logging.info(f"[Main] テストローダーのバッチサイズ: {batch_size}")
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=2, pin_memory=True) 
+    
+    if len(client_dataloaders) != config.get('num_clients', 5):
         logging.warning(f"[Main] Warning: データ割り当ての結果、クライアント数が {len(client_dataloaders)} になりました。")
         config['num_clients'] = len(client_dataloaders)
 
@@ -457,6 +487,7 @@ if __name__ == "__main__":
         'device': device
     }
 
+    # config の値を使って実行
     final_shapley_values = run_main_training(config, all_datasets)
     
     logging.info("\n[Main] すべての処理が完了しました。")
