@@ -1,0 +1,40 @@
+[2025-11-09 09:38:07] [INFO] - [Main] config.yml から設定をロードしました。
+[2025-11-09 09:38:07] [INFO] - Loaded config:
+{
+  "num_clients": 5,
+  "num_rounds": 20,
+  "local_epochs": 2,
+  "non_iid_alpha": 0.3,
+  "rank": 4,
+  "lora_target_modules": [
+    "mlp",
+    "head"
+  ],
+  "server_lr": 0.1,
+  "client_lr": 0.01,
+  "shapley_tmc_iterations": 20,
+  "eval_interval": 1
+}
+[2025-11-09 09:38:07] [INFO] - 
+[Main] Using device: cuda
+[2025-11-09 09:38:07] [INFO] - 
+[Main] 共通データセットを準備します...
+[2025-11-09 09:38:09] [INFO] - [Data] Non-IIDデータ分割を開始 (Alpha=0.3)...
+[2025-11-09 09:38:09] [INFO] - [Data] 5 クライアント分のデータローダーを作成完了。
+[2025-11-09 09:38:09] [INFO] - --- [パート1] FedSGD (Multi-B ViT) 版 ---
+[2025-11-09 09:38:09] [INFO] - Clients: 5, Rounds: 20, Rank: 4
+[2025-11-09 09:38:09] [INFO] - ------------------------------
+[2025-11-09 09:38:09] [INFO] - [Model] ViT-Base (ImageNet-1k) をロード中...
+[2025-11-09 09:38:10] [INFO] - [Model] LoRAターゲット: ['mlp', 'head']
+[2025-11-09 09:38:10] [INFO] - [Model] 24 層のMLPブロックをLoRA化しました。
+[2025-11-09 09:38:10] [INFO] - [Model] 分類ヘッド (Linear 768->10) をLoRA化しました。
+[2025-11-09 09:38:11] [INFO] - [Main] サーバが管理するB行列 (計 25 個): ['encoder_layers_encoder_layer_0_mlp_0', 'encoder_layers_encoder_layer_0_mlp_3', 'encoder_layers_encoder_layer_1_mlp_0', 'encoder_layers_encoder_layer_1_mlp_3', 'encoder_layers_encoder_layer_2_mlp_0', 'encoder_layers_encoder_layer_2_mlp_3', 'encoder_layers_encoder_layer_3_mlp_0', 'encoder_layers_encoder_layer_3_mlp_3', 'encoder_layers_encoder_layer_4_mlp_0', 'encoder_layers_encoder_layer_4_mlp_3', 'encoder_layers_encoder_layer_5_mlp_0', 'encoder_layers_encoder_layer_5_mlp_3', 'encoder_layers_encoder_layer_6_mlp_0', 'encoder_layers_encoder_layer_6_mlp_3', 'encoder_layers_encoder_layer_7_mlp_0', 'encoder_layers_encoder_layer_7_mlp_3', 'encoder_layers_encoder_layer_8_mlp_0', 'encoder_layers_encoder_layer_8_mlp_3', 'encoder_layers_encoder_layer_9_mlp_0', 'encoder_layers_encoder_layer_9_mlp_3', 'encoder_layers_encoder_layer_10_mlp_0', 'encoder_layers_encoder_layer_10_mlp_3', 'encoder_layers_encoder_layer_11_mlp_0', 'encoder_layers_encoder_layer_11_mlp_3', 'heads']
+[2025-11-09 09:38:11] [INFO] - [Server] FedSGD (Multi-B) サーバを初期化しました (lr=0.1)。
+[2025-11-09 09:38:11] [INFO] - [Main] Client LR: 0.01
+[2025-11-09 09:38:11] [INFO] - [Main] 5 クライアントの初期化完了。
+[2025-11-09 09:38:11] [INFO] - ------------------------------
+[2025-11-09 09:38:11] [INFO] - [Main] グローバルテスト精度を 1 ラウンドごとに計算します。
+[2025-11-09 09:38:11] [INFO] - 
+--- Round 1/20 ---
+[2025-11-09 09:39:06] [INFO] -   [Client 0] Local Train (All A's): Avg Loss = 1.2769
+[2025-11-09 09:42:51] [INFO] -   [Client 1] Local Train (All A's): Avg Loss = 0.7176
