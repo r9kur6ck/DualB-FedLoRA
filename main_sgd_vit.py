@@ -127,8 +127,8 @@ class ViT_LoRA_Multi(nn.Module):
         x = torch.cat([batch_class_token, x], dim=1)
         
         # ★★★ 修正 ★★★
-        # "positional_embedding" -> "pos_embedding"
-        x = x + self.vit.pos_embedding
+        # self.vit ではなく、self.vit.encoder の属性
+        x = x + self.vit.encoder.pos_embedding
         # ★★★ 修正ここまで ★★★
         
         for i, layer in enumerate(self.vit.encoder.layers):
