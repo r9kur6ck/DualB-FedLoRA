@@ -78,16 +78,11 @@ class LoRALayer(nn.Module):
 
 # ★ 修正: 選択的にレイヤーを差し替えるヘルパー
 def patch_vit_layers(vit_model, rank, lora_target_modules):
-    """
-    ViTモデルの指定されたモジュールをLoRALayerに差し替える
-    """
     logging.info(f"[Model] LoRAターゲット: {lora_target_modules}")
     
-    # 1. MLPブロックの差し替え
     if 'mlp' in lora_target_modules:
         count = 0
-        for layer in vit_model.encoder.layers:
-            # ViTのMLPは [Linear, GELU, Dropout, Linear, Dropout]
+        for i, layer in enumerate(vit_model.encoder.layers):
             original_mlp_0 = layer.mlp[0]
             layer.mlp[0] = LoRALayer(original_mlp_0, rank)
             
@@ -96,7 +91,6 @@ def patch_vit_layers(vit_model, rank, lora_target_modules):
             count += 2
         logging.info(f"[Model] {count} 層のMLPブロックをLoRA化しました。")
 
-    # 2. 分類ヘッドの差し替え
     if 'head' in lora_target_modules:
         hidden_dim = vit_model.hidden_dim
         num_classes = 10
@@ -104,33 +98,28 @@ def patch_vit_layers(vit_model, rank, lora_target_modules):
         vit_model.heads = LoRALayer(original_head_layer, rank)
         logging.info(f"[Model] 分類ヘッド (Linear {hidden_dim}->{num_classes}) をLoRA化しました。")
     else:
-        # LoRA化しない場合でも、ImageNet(1000)からCIFAR(10)にヘッドを交換する必要がある
         hidden_dim = vit_model.hidden_dim
         num_classes = 10
         vit_model.heads = nn.Linear(hidden_dim, num_classes)
         logging.info(f"[Model] 分類ヘッドを (LoRA化せず) {num_classes} クラス用に交換しました。")
-        # 注意: この場合、ヘッドはフリーズされません (通常のFLとして学習されます)
         
     return vit_model
 
 # ★ 修正: ViT_LoRA_Multi モデル
 class ViT_LoRA_Multi(nn.Module):
-    # ★ 修正: lora_target_modules を受け取る
     def __init__(self, rank=4, num_classes=10, lora_target_modules=None):
         super().__init__()
         if lora_target_modules is None:
-            lora_target_modules = ['head'] # デフォルトはヘッドのみ
+            lora_target_modules = ['head'] 
             
         logging.info("[Model] ViT-Base (ImageNet-1k) をロード中...")
         self.vit = torchvision.models.vit_b_16(
             weights=torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1
         )
         
-        # ViTの全パラメータをフリーズ
         for param in self.vit.parameters():
             param.requires_grad = False
             
-        # ★ LoRAパッチを選択的に適用
         self.vit = patch_vit_layers(self.vit, rank, lora_target_modules)
 
     # ★ 修正: b_server の *辞書* を受け取り、動的にBを注入
@@ -141,50 +130,49 @@ class ViT_LoRA_Multi(nn.Module):
         x = torch.cat([batch_class_token, x], dim=1)
         x = x + self.vit.positional_embedding
         
+        # ★ 修正: Encoder のフォワードを手動で実行
         for i, layer in enumerate(self.vit.encoder.layers):
-            # (Attention ブロック - 変更なし、フリーズ状態)
             x_norm1 = layer.ln_1(x)
             x_attn, _ = layer.self_attention(x_norm1, x_norm1, x_norm1, need_weights=False)
             x_attn = layer.dropout(x_attn)
             x = x + x_attn
             
-            # (MLP ブロック - LoRA化されているかチェック)
             x_norm2 = layer.ln_2(x)
             
-            # layer.mlp[0]
-            b_0 = b_server_states.get(f"encoder.layers.{i}.mlp.0") if b_server_states else None
+            # ★ 修正: キー名を `.` から `_` に変更
+            b_0_key = f"encoder_layers_{i}_mlp_0"
+            b_3_key = f"encoder_layers_{i}_mlp_3"
+            
+            b_0 = b_server_states.get(b_0_key) if b_server_states else None
             if b_0 is not None and isinstance(layer.mlp[0], LoRALayer):
                 x_mlp = layer.mlp[0](x_norm2, b_server=b_0)
             else:
-                x_mlp = layer.mlp[0](x_norm2) # 通常のLinearとして実行
+                x_mlp = layer.mlp[0](x_norm2) 
             
             x_mlp = layer.mlp[1](x_mlp) # GELU
             x_mlp = layer.mlp[2](x_mlp) # Dropout
             
-            # layer.mlp[3]
-            b_3 = b_server_states.get(f"encoder.layers.{i}.mlp.3") if b_server_states else None
+            b_3 = b_server_states.get(b_3_key) if b_server_states else None
             if b_3 is not None and isinstance(layer.mlp[3], LoRALayer):
                 x_mlp = layer.mlp[3](x_mlp, b_server=b_3)
             else:
-                x_mlp = layer.mlp[3](x_mlp) # 通常のLinearとして実行
+                x_mlp = layer.mlp[3](x_mlp) 
                 
             x_mlp = layer.mlp[4](x_mlp) # Dropout
-            
             x = x + x_mlp
         
         x = self.vit.encoder.ln(x)
         x = x[:, 0]
         
-        # ★ 修正: 分類ヘッド (LoRA化されているかチェック)
-        b_head = b_server_states.get("heads") if b_server_states else None
+        b_head_key = "heads"
+        b_head = b_server_states.get(b_head_key) if b_server_states else None
         if b_head is not None and isinstance(self.vit.heads, LoRALayer):
             x = self.vit.heads(x, b_server=b_head)
         else:
-            x = self.vit.heads(x) # 通常のLinearとして実行
+            x = self.vit.heads(x)
         
         return x
 
-    # ★ 修正: LoRALayer の A パラメータのみを収集
     def get_lora_parameters(self):
         params_list = []
         for name, module in self.vit.named_modules():
@@ -196,7 +184,8 @@ class ViT_LoRA_Multi(nn.Module):
         state_dict = {}
         for name, module in self.vit.named_modules():
             if isinstance(module, LoRALayer):
-                clean_name = name.replace("vit.", "")
+                # ★ 修正: キー名を `.` から `_` に変更
+                clean_name = name.replace("vit.", "").replace(".", "_")
                 state_dict[clean_name] = module.A.data
         return state_dict
 
@@ -206,7 +195,7 @@ class Client:
         self.client_id = client_id
         self.dataloader = dataloader
         self.model = local_model
-        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=client_lr) # 全ての A を対象
+        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=client_lr) 
         self.criterion = nn.CrossEntropyLoss()
         self.device = device
 
@@ -214,7 +203,6 @@ class Client:
         self.model.train()
         total_loss, total_batches = 0.0, 0
         
-        # B_server の全テンソルを取得 (requires_grad=True)
         for b_tensor in b_server_states.values():
             b_tensor.requires_grad = True
 
@@ -244,9 +232,10 @@ class Client:
         g_A_dict = {}
         g_B_dict = {}
         
+        # ★ 修正: キー名を `.` から `_` に変更
         for name, module in self.model.vit.named_modules():
             if isinstance(module, LoRALayer):
-                clean_name = name.replace("vit.", "")
+                clean_name = name.replace("vit.", "").replace(".", "_")
                 if module.A.grad is not None:
                     g_A_dict[clean_name] = module.A.grad.clone().detach()
         
@@ -261,13 +250,14 @@ class FedSGDServer:
     def __init__(self, b_server_template, test_loader, device, server_lr):
         self.B_server_states = nn.ParameterDict()
         for name, shape in b_server_template.items():
-            b_tensor_gpu = (torch.randn(shape) / shape[1]).to(device) # (k, r) / r
+            # ★ 修正: キー名 (name) は既に _ 形式になっている
+            b_tensor_gpu = (torch.randn(shape) / shape[1]).to(device)
             self.B_server_states[name] = nn.Parameter(b_tensor_gpu)
             
         self.optimizer = optim.SGD(self.B_server_states.parameters(), lr=server_lr)
         
         self.all_A_states = {}
-        self.base_model_copy = None # 評価用にクライアントモデルのコピーを保持
+        self.base_model_copy = None 
         self.test_loader = test_loader
         self.v_cache, self.final_shapley_values = {}, {}
         self.device = device
@@ -289,8 +279,6 @@ class FedSGDServer:
             
             if valid_grads_b_layer:
                 g_B_global_dict[name] = torch.stack(valid_grads_b_layer).mean(dim=0)
-            else:
-                logging.warning(f"[Server] {name} の有効なB勾配がありません。")
 
         self.optimizer.zero_grad()
         for name, param in self.B_server_states.items():
@@ -309,23 +297,32 @@ class FedSGDServer:
         
         self.v_cache.clear()
 
+    # ★ 修正: A_S 辞書のキーも _ 形式
     def evaluate_coalition(self, coalition_client_ids, b_server_states):
         coalition_tuple = tuple(sorted(coalition_client_ids))
         if coalition_tuple in self.v_cache: return self.v_cache[coalition_tuple]
         if not coalition_client_ids: return 0.0
 
         A_S_dict = {}
-        all_a_keys = self.all_A_states[list(coalition_client_ids)[0]].keys()
-        for name in all_a_keys:
-            A_states_in_S_layer = [self.all_A_states[cid][name] for cid in coalition_client_ids]
-            A_S_dict[name] = torch.stack(A_states_in_S_layer).mean(dim=0)
+        # 最初のクライアントのA辞書からキーを取得
+        if not self.all_A_states: 
+             logging.error("[Shapley] all_A_states が空です。")
+             return 0.0
         
-        eval_model = copy.deepcopy(self.base_model_copy) # 保持しているコピーを使用
+        first_client_id = list(self.all_A_states.keys())[0]
+        all_a_keys = self.all_A_states[first_client_id].keys()
+        
+        for name in all_a_keys:
+            A_states_in_S_layer = [self.all_A_states[cid][name] for cid in coalition_client_ids if name in self.all_A_states[cid]]
+            if A_states_in_S_layer:
+                A_S_dict[name] = torch.stack(A_states_in_S_layer).mean(dim=0)
+        
+        eval_model = copy.deepcopy(self.base_model_copy) 
         eval_model.eval()
         
         for name, module in eval_model.vit.named_modules():
              if isinstance(module, LoRALayer):
-                clean_name = name.replace("vit.", "")
+                clean_name = name.replace("vit.", "").replace(".", "_") # ★ _ 形式
                 if clean_name in A_S_dict:
                     module.A.data = A_S_dict[clean_name]
 
@@ -366,6 +363,7 @@ class FedSGDServer:
             logging.info(f"         Client {client_id}: phi = {shapley_values[client_id]:.4f}")
         self.final_shapley_values = shapley_values
 
+    # ★ 修正: g_A (Aの勾配) も辞書として処理
     def run_gradient_proxy_validation(self):
         if not self.all_Gradients_A:
             logging.error("[Proxy Validation] Error: 検証用の勾配(A)がありません。")
@@ -375,7 +373,12 @@ class FedSGDServer:
             return
             
         g_A_global_dict = {}
-        all_a_keys = self.all_Gradients_A[list(self.all_Gradients_A.keys())[0]].keys()
+        # 最初のクライアントの勾配辞書からキーを取得
+        if not self.all_Gradients_A:
+             logging.error("[Proxy Validation] all_Gradients_A が空です。")
+             return
+        first_client_id = list(self.all_Gradients_A.keys())[0]
+        all_a_keys = self.all_Gradients_A[first_client_id].keys()
         
         for name in all_a_keys:
             all_g_A_i_layer = [g[name] for g in self.all_Gradients_A.values() if name in g and g[name] is not None]
@@ -393,6 +396,7 @@ class FedSGDServer:
             proxy_scores_C_i[client_id] = c_i_total
             logging.info(f"         Client {client_id}: C_i = {c_i_total:.4e}")
         
+        # (以降の相関計算ロジックは変更なし)
         phi_values, c_values, client_ids = [], [], []
         sorted_client_ids = sorted(self.final_shapley_values.keys())
         for cid in sorted_client_ids:
@@ -430,18 +434,24 @@ class FedSGDServer:
             return 0.0
 
         A_global_dict = {}
-        all_a_keys = self.all_A_states[list(self.all_A_states.keys())[0]].keys()
+        # 最初のクライアントのA辞書からキーを取得
+        if not self.all_A_states:
+             logging.error("[Evaluate] all_A_states が空です。")
+             return 0.0
+        first_client_id = list(self.all_A_states.keys())[0]
+        all_a_keys = self.all_A_states[first_client_id].keys()
         
         for name in all_a_keys:
-            A_states_all_layer = [s[name] for s in self.all_A_states.values()]
-            A_global_dict[name] = torch.stack(A_states_all_layer).mean(dim=0)
+            A_states_all_layer = [s[name] for s in self.all_A_states.values() if name in s]
+            if A_states_all_layer:
+                A_global_dict[name] = torch.stack(A_states_all_layer).mean(dim=0)
             
         eval_model = copy.deepcopy(self.base_model_copy)
         eval_model.eval()
         
         for name, module in eval_model.vit.named_modules():
              if isinstance(module, LoRALayer):
-                clean_name = name.replace("vit.", "")
+                clean_name = name.replace("vit.", "").replace(".", "_") # ★ _ 形式
                 if clean_name in A_global_dict:
                     module.A.data = A_global_dict[clean_name]
 
@@ -482,7 +492,8 @@ def run_main_training(config, all_datasets):
     b_server_template = {}
     for name, module in base_model.vit.named_modules():
         if isinstance(module, LoRALayer):
-            clean_name = name.replace("vit.", "")
+            # ★ 修正: キー名を `.` から `_` に変更
+            clean_name = name.replace("vit.", "").replace(".", "_")
             k = module.original_layer.out_features
             r = module.rank
             b_server_template[clean_name] = (k, r)
