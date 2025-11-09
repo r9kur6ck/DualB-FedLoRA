@@ -15,7 +15,7 @@ import logging
 import sys 
 
 # --- 0. ★ ロギング設定 ---
-def setup_logging(logfile='experiment_fedsgd_resnet.log'): # ログファイル名変更
+def setup_logging(logfile='experiment_fedsgd_resnet.log'): 
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     formatter = logging.Formatter(
@@ -76,7 +76,6 @@ class LoRALayer(nn.Module):
         lora_x = b_server @ A_x
         return w0_x + lora_x.T
 
-# ★ 修正: SimpleCNN -> ResNet_LoRA_Head に変更
 class ResNet_LoRA_Head(nn.Module):
     def __init__(self, rank=4, num_classes=10):
         super().__init__()
@@ -149,14 +148,11 @@ class Client:
 
 # --- 4. [パート1] FedSGDサーバ (Server) ---
 class FedSGDServer:
-    # ★ 修正: d, k を引数で受け取る
     def __init__(self, base_model, rank, test_loader, device, server_lr, d, k):
-        
         b_tensor_gpu = (torch.randn(k, rank) / rank).to(device)
         b_param_leaf = nn.Parameter(b_tensor_gpu)
         self.B_server_state = {'B_server_fc1': b_param_leaf}
         self.optimizer = optim.SGD([self.B_server_state['B_server_fc1']], lr=server_lr)
-        
         self.rank = rank
         self.all_A_states = {}
         self.base_model, self.test_loader = base_model, test_loader
@@ -164,7 +160,6 @@ class FedSGDServer:
         self.device = device
         self.all_Gradients_A = {} 
         self.all_Gradients_B = [] 
-        
         logging.info(f"[Server] FedSGD (B-update) サーバを初期化しました (lr={server_lr})。")
 
     # (aggregate_and_update, evaluate_coalition, compute_shapley_tmc, 
@@ -316,10 +311,8 @@ def run_main_training(config, all_datasets):
     client_dataloaders = all_datasets['client_dataloaders']
     test_loader = all_datasets['test_loader']
     
-    # ★ 修正: ResNet_LoRA_Head を使用
     base_model = ResNet_LoRA_Head(rank=config['rank'], num_classes=10).to(device)
     
-    # ★ 修正: d, k を ResNet のヘッドから取得
     d_model = base_model.lora_fc1.original_layer.in_features
     k_model = base_model.lora_fc1.original_layer.out_features
     
@@ -329,8 +322,8 @@ def run_main_training(config, all_datasets):
         test_loader=test_loader, 
         device=device,
         server_lr=config.get('server_lr', 0.01),
-        d=d_model, # ★ 追加
-        k=k_model  # ★ 追加
+        d=d_model, 
+        k=k_model  
     )
 
     clients = []
@@ -417,9 +410,9 @@ if __name__ == "__main__":
     
     logging.info("\n[Main] 共通データセットを準備します...")
     
-    # ★ 修正: ResNet は 224x224 の解像度を推奨
+    # ★★★ 修正: 128x128 に変更 ★★★
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((128, 128)), # 224x224 から 128x128 に縮小
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -432,7 +425,6 @@ if __name__ == "__main__":
         exit()
         
     client_dataloaders = get_non_iid_data(config['num_clients'], train_dataset, alpha=config['non_iid_alpha'])
-    # ★ メモリ使用量を考慮しバッチサイズを64に
     test_loader = DataLoader(test_dataset, batch_size=64, num_workers=2, pin_memory=True) 
     
     if len(client_dataloaders) != config['num_clients']:

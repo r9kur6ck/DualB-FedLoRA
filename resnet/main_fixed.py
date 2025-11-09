@@ -15,7 +15,7 @@ import logging
 import sys 
 
 # --- 0. ★ ロギング設定 ---
-def setup_logging(logfile='experiment_fixed_b_resnet.log'): # ログファイル名変更
+def setup_logging(logfile='experiment_fixed_b_resnet.log'): 
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     formatter = logging.Formatter(
@@ -76,44 +76,27 @@ class LoRALayer(nn.Module):
         lora_x = b_server @ A_x
         return w0_x + lora_x.T
 
-# ★ 修正: SimpleCNN -> ResNet_LoRA_Head に変更
 class ResNet_LoRA_Head(nn.Module):
     def __init__(self, rank=4, num_classes=10):
         super().__init__()
         logging.info("[Model] ResNet-50 (ImageNet-1k) をロード中...")
-        # ImageNetで事前学習済みのResNet-50モデルをロード
         self.resnet = torchvision.models.resnet50(
             weights=torchvision.models.ResNet50_Weights.IMAGENET1K_V2
         )
-        
-        # ResNet-50 の最終層の入力次元 (2048)
         in_features = self.resnet.fc.in_features
-        
-        # 元の分類ヘッド (ImageNet 1000クラス) を無効化
         self.resnet.fc = nn.Identity()
-        
-        # ResNetの全パラメータをフリーズ
         for param in self.resnet.parameters():
             param.requires_grad = False
-            
-        # CIFAR-10用の新しい分類ヘッド (2048 -> 10) を作成
         original_head_layer = nn.Linear(in_features, num_classes)
-        
-        # この新しいヘッドをLoRA化 (キー名を 'fc1' に統一)
         self.lora_fc1 = LoRALayer(original_head_layer, rank=rank)
         logging.info(f"[Model] ResNet-50ロード完了。分類ヘッド (Linear {in_features}->{num_classes}) をLoRA化 (Rank={rank})。")
 
     def forward(self, x, b_server_fc1=None):
-        # ResNetのフォワードパス (fc の手前まで)
         x = self.resnet(x)
-        
-        # LoRA化されたヘッドを適用
         x = self.lora_fc1(x, b_server=b_server_fc1) 
         return x
-
     def get_lora_parameters(self):
         return [{"params": self.lora_fc1.A}] 
-        
     def get_lora_state(self):
         return {'A_fc1': self.lora_fc1.A.data}
 
@@ -123,77 +106,60 @@ class Client:
         self.client_id = client_id
         self.dataloader = dataloader
         self.model = local_model
-        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=client_lr) # A_i のみ
+        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=client_lr)
         self.criterion = nn.CrossEntropyLoss()
         self.device = device
 
-    # ★ 修正: B_server の勾配計算ロジックを削除
     def local_train(self, local_epochs, b_server_states):
         self.model.train()
         total_loss, total_batches = 0.0, 0
-        g_A_i = None
-        
-        # B_server のテンソルは requires_grad=False (固定) のまま
+        g_A_i = None 
         b_fc1 = b_server_states['B_server_fc1']
 
         for epoch in range(local_epochs):
             epoch_loss, epoch_batches = 0.0, 0
             for data, target in self.dataloader:
                 data, target = data.to(self.device), target.to(self.device)
-                
                 self.optimizer.zero_grad()
-                
                 output = self.model(data, b_server_fc1=b_fc1) 
                 loss = self.criterion(output, target)
-                
                 loss.backward()
-                
                 if self.model.lora_fc1.A.grad is not None:
                     g_A_i = self.model.lora_fc1.A.grad.clone().detach() 
-                
                 self.optimizer.step()
-                
                 epoch_loss += loss.item()
                 epoch_batches += 1
             total_loss += epoch_loss
             total_batches += epoch_batches
-            
         avg_loss = total_loss / total_batches if total_batches > 0 else 0
         logging.info(f"  [Client {self.client_id}] Local Train (A only): Avg Loss = {avg_loss:.4f}")
-        
-        # Proxy検証用の A の勾配のみ返す
         return {'A_fc1': g_A_i}
 
 # --- 4. [パート1] B行列固定サーバ (Server) ---
 class FixedBServer:
     def __init__(self, base_model, rank, test_loader, device, d, k):
-        
-        # ★ 修正: d, k を使って B を初期化
-        b_tensor_gpu = (torch.randn(k, rank) / rank).to(device)
+        b_tensor_gpu = torch.empty(k, rank, device=device)
+        torch.nn.init.orthogonal_(b_tensor_gpu)
+        logging.info(f"[Server] B_server を直交行列 (shape {k}x{rank}) で初期化しました。")
         self.B_server_state = {'B_server_fc1': b_tensor_gpu.requires_grad_(False)}
-        
         self.rank = rank
         self.all_A_states = {}
         self.base_model, self.test_loader = base_model, test_loader
         self.v_cache, self.final_shapley_values = {}, {}
         self.device = device
         self.all_Gradients_A = {}
-        
-        logging.info(f"[Server] Fixed-B (ResNet) サーバを初期化しました。")
+        logging.info(f"[Server] B-Fixed (ResNet) サーバを初期化しました。")
 
     def aggregate_and_update(self, compute_shapley_round, mc_iterations):
         logging.info(f"         [Server] B_server は固定されているため、更新をスキップします。")
-        
         if compute_shapley_round:
             logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
             self.compute_shapley_tmc(self.all_A_states, self.B_server_state, mc_iterations=mc_iterations)
-            
-            logging.info("\n[Server] Gradient-based Proxy Validation を開始...")
+            logging.info("\n[Server] (検証1) Gradient-based Proxy Validation を開始...")
             self.run_gradient_proxy_validation()
-        
+            logging.info("\n[Server] (検証2) Local Accuracy vs Shapley Validation を開始...")
+            self.run_local_accuracy_validation()
         self.v_cache.clear()
-
-    # (evaluate_coalition, compute_shapley_tmc, run_gradient_proxy_validation は変更なし)
 
     def evaluate_coalition(self, coalition_client_ids, b_server_state):
         coalition_tuple = tuple(sorted(coalition_client_ids))
@@ -266,7 +232,7 @@ class FixedBServer:
                 phi_values.append(self.final_shapley_values[cid])
                 c_values.append(proxy_scores_C_i[cid])
         logging.info("\n" + "=" * 40)
-        logging.info("--- Gradient-based Proxy 検証結果 ---")
+        logging.info("--- (検証1) Gradient-based Proxy 検証結果 ---")
         logging.info("=" * 40)
         logging.info(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'C_i (Proxyスコア)':<17}")
         logging.info("-" * 48)
@@ -277,14 +243,67 @@ class FixedBServer:
             logging.warning("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
         else:
             corr, p_val = spearmanr(phi_values, c_values)
-            logging.info("\n[相関分析結果]")
+            logging.info("\n[相関分析結果 (Proxy vs Phi)]")
             logging.info(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})")
             if corr > 0.8:
-                logging.info("\n[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。")
+                logging.info("\n[結論] 強い正の相関 (rho > 0.8)。")
             elif corr > 0.5:
-                 logging.info("\n[結論] 正の相関が見られますが、基準 (rho > 0.8) には達していません。")
+                 logging.info("\n[結論] 正の相関が見られます。")
             else:
-                logging.info("\n[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。")
+                logging.info("\n[結論] 相関が低いか負です。")
+                
+    def evaluate_individual_client_performance(self, client_id):
+        if client_id not in self.all_A_states:
+            logging.warning(f"[LocalAcc Eval] Client {client_id} の A_state がありません。")
+            return 0.0
+        A_i_state = self.all_A_states[client_id]
+        A_i_fc1 = A_i_state['A_fc1']
+        eval_model = copy.deepcopy(self.base_model)
+        eval_model.lora_fc1.A.data = A_i_fc1 
+        eval_model.eval()
+        correct, total = 0, 0
+        with torch.no_grad():
+            for data, target in self.test_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output = eval_model(data, b_server_fc1=self.B_server_state['B_server_fc1'])
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+                total += len(target)
+        v_i_accuracy = 100. * correct / total if total > 0 else 0
+        logging.info(f"           [LocalAcc Eval] Client {client_id} (A_i only) Test Acc = {v_i_accuracy:.4f}%")
+        return v_i_accuracy
+
+    def run_local_accuracy_validation(self):
+        if not self.final_shapley_values:
+            logging.error("[LocalAcc Validation] Error: 比較対象のShapley値がありません。")
+            return
+        local_accuracies = []
+        client_ids = sorted(self.final_shapley_values.keys())
+        logging.info("[LocalAcc Validation] 各クライアントの個別テスト精度 (Local Acc) を計算:")
+        for cid in client_ids:
+            local_acc = self.evaluate_individual_client_performance(cid)
+            local_accuracies.append(local_acc)
+        phi_values = [self.final_shapley_values[cid] for cid in client_ids]
+        logging.info("\n" + "=" * 40)
+        logging.info("--- (検証2) Local Accuracy vs Shapley 検証結果 ---")
+        logging.info("=" * 40)
+        logging.info(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'Local Acc (個別精度)':<17}")
+        logging.info("-" * 50)
+        for i in range(len(client_ids)):
+            logging.info(f"{client_ids[i]:<10} | {phi_values[i]:<17.4f} | {local_accuracies[i]:<17.4f}%")
+        logging.info("-" * 50)
+        if len(phi_values) < 2 or np.std(phi_values) == 0 or np.std(local_accuracies) == 0:
+            logging.warning("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
+        else:
+            corr, p_val = spearmanr(phi_values, local_accuracies)
+            logging.info("\n[相関分析結果 (Local Acc vs Phi)]")
+            logging.info(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})")
+            if corr > 0.8:
+                logging.info("\n[結論] 強い正の相関。Shapley値は個別のA_iの性能をよく反映しています。")
+            elif corr > 0.0:
+                logging.info("\n[結論] 正の相関が見られます。")
+            else:
+                logging.info("\n[結論] 相関が低いか負であり、Shapley値は個別のA_iの性能を反映していません。")
 
     def evaluate_global_model(self):
         if not self.all_A_states: 
@@ -320,10 +339,8 @@ def run_main_training(config, all_datasets):
     client_dataloaders = all_datasets['client_dataloaders']
     test_loader = all_datasets['test_loader']
     
-    # ★ 修正: ResNet_LoRA_Head を使用
     base_model = ResNet_LoRA_Head(rank=config['rank'], num_classes=10).to(device)
     
-    # ★ 修正: d, k を ResNet のヘッドから取得
     d_model = base_model.lora_fc1.original_layer.in_features
     k_model = base_model.lora_fc1.original_layer.out_features
     
@@ -358,7 +375,7 @@ def run_main_training(config, all_datasets):
         logging.info(f"\n--- Round {t+1}/{config['num_rounds']} ---")
         server.clear_round_data()
         
-        current_b_state = server.B_server_state
+        current_b_state = server.B_server_state 
 
         for i in range(actual_num_clients):
             client = clients[i]
@@ -395,7 +412,7 @@ if __name__ == "__main__":
     
     setup_logging(logfile='experiment_fixed_b_resnet.log') 
     
-    config_file = "config.yml"
+    config_file = "config.yml" 
     try:
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
@@ -413,9 +430,9 @@ if __name__ == "__main__":
     
     logging.info("\n[Main] 共通データセットを準備します...")
     
-    # ★ 修正: ResNet は 224x224 の解像度を推奨
+    # ★★★ 修正: 128x128 に変更 ★★★
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((128, 128)), # 224x224 から 128x128 に縮小
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -428,7 +445,6 @@ if __name__ == "__main__":
         exit()
         
     client_dataloaders = get_non_iid_data(config['num_clients'], train_dataset, alpha=config['non_iid_alpha'])
-    # ★ メモリ使用量を考慮しバッチサイズを64に
     test_loader = DataLoader(test_dataset, batch_size=64, num_workers=2, pin_memory=True) 
     
     if len(client_dataloaders) != config['num_clients']:

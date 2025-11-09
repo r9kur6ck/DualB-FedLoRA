@@ -15,7 +15,7 @@ import logging
 import sys 
 
 # --- 0. ★ ロギング設定 ---
-def setup_logging(logfile='experiment_fixed_b.log'): # ログファイル名変更
+def setup_logging(logfile='experiment_fixed_b.log'): 
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     formatter = logging.Formatter(
@@ -34,6 +34,7 @@ def setup_logging(logfile='experiment_fixed_b.log'): # ログファイル名変�
 # --- 1. 共通: データセット準備 (Non-IID) ---
 def get_non_iid_data(num_clients, dataset, alpha=0.3):
     logging.info(f"[Data] Non-IIDデータ分割を開始 (Alpha={alpha})...")
+    # (中身は変更なし)
     targets = np.array(dataset.targets)
     num_classes = len(np.unique(targets))
     client_indices = [[] for _ in range(num_clients)]
@@ -95,15 +96,16 @@ class SimpleCNN(nn.Module):
 
 # --- 3. 共通: クライアント (Client) の実装 ---
 class Client:
-    def __init__(self, client_id, dataloader, local_model, device):
+    # ★ 修正: client_lr を受け取る
+    def __init__(self, client_id, dataloader, local_model, device, client_lr):
         self.client_id = client_id
         self.dataloader = dataloader
         self.model = local_model
-        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=0.01) # A_i のみ
+        # ★ 修正: client_lr を使用
+        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=client_lr) # A_i のみ
         self.criterion = nn.CrossEntropyLoss()
         self.device = device
 
-    # ★ 修正: SPSAではなく、固定された B_server を受け取る
     def local_train(self, local_epochs, b_server_fixed):
         self.model.train()
         total_loss, total_batches = 0.0, 0
@@ -131,7 +133,7 @@ class Client:
         avg_loss = total_loss / total_batches if total_batches > 0 else 0
         logging.info(f"  [Client {self.client_id}] Local Train (A only): Avg Loss = {avg_loss:.4f}")
 
-        # R_i は SPSA がないので不要だが、互換性のために計算だけする
+        # R_i (ローカル訓練データでの精度) を計算
         self.model.eval()
         correct, total = 0, 0
         with torch.no_grad(): 
@@ -142,18 +144,21 @@ class Client:
                 correct += pred.eq(target.view_as(pred)).sum().item()
                 total += len(target)
         R_i = 100. * correct / total if total > 0 else 0
-        logging.info(f"  [Client {self.client_id}] Evaluate Reward: R_i = {R_i:.2f}% ({correct}/{total})")
+        logging.info(f"  [Client {self.client_id}] Evaluate Reward (on Local Train Data): R_i = {R_i:.2f}% ({correct}/{total})")
         
-        return {'A_fc1': g_A_i}, R_i
+        return {'A_fc1': g_A_i}
 
 # --- 4. [パート1] B行列固定サーバ (Server) ---
 class FixedBServer:
     def __init__(self, base_model, rank, test_loader, device):
         d, k = base_model.fc1.in_features, base_model.fc1.out_features
         
-        # ★ 修正: B_server を nn.Parameter ではなく、固定テンソルとして初期化
-        b_tensor_gpu = (torch.randn(k, rank) / rank).to(device)
-        self.B_server_state = {'B_server_fc1': b_tensor_gpu.requires_grad_(False)} # 勾配計算不要
+        # B_server を「直交行列」で初期化 (推奨プラクティス)
+        b_tensor_gpu = torch.empty(k, rank, device=device)
+        torch.nn.init.orthogonal_(b_tensor_gpu)
+        logging.info(f"[Server] B_server を直交行列 (shape {k}x{rank}) で初期化しました。")
+        
+        self.B_server_state = {'B_server_fc1': b_tensor_gpu.requires_grad_(False)}
         
         self.rank = rank
         self.all_A_states, self.all_Rewards = {}, {}
@@ -164,30 +169,28 @@ class FixedBServer:
         
         logging.info(f"[Server] B-Fixed サーバを初期化しました。 (B_server は更新されません)")
 
-    # ★ 修正: SPSA (generate_spsa_perturbation) は削除
-    
-    # ★ 修正: B_server の更新ロジックをすべて削除
     def aggregate_and_update(self, compute_shapley_round, mc_iterations):
-        
         logging.info(f"         [Server] B_server は固定されているため、更新をスキップします。")
         
-        # --- 検証 (最終ラウンドのみ) ---
         if compute_shapley_round:
             logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
             self.compute_shapley_tmc(self.all_A_states, self.B_server_state, mc_iterations=mc_iterations)
             
-            logging.info("\n[Server] Gradient-based Proxy Validation を開始...")
+            logging.info("\n[Server] (検証1) Gradient-based Proxy Validation を開始...")
             self.run_gradient_proxy_validation()
+            
+            # ★★★ 新しい検証を追加 ★★★
+            logging.info("\n[Server] (検証2) Local Accuracy vs Shapley Validation を開始...")
+            self.run_local_accuracy_validation()
+            # ★★★★★★★★★★★★★★★★
         
         self.v_cache.clear()
 
     # (evaluate_coalition, compute_shapley_tmc, run_gradient_proxy_validation は変更なし)
     def evaluate_coalition(self, coalition_client_ids, b_server_state):
         coalition_tuple = tuple(sorted(coalition_client_ids))
-        if coalition_tuple in self.v_cache: 
-            return self.v_cache[coalition_tuple]
-        if not coalition_client_ids: 
-            return 0.0
+        if coalition_tuple in self.v_cache: return self.v_cache[coalition_tuple]
+        if not coalition_client_ids: return 0.0
 
         A_states_in_S = [self.all_A_states[cid]['A_fc1'] for cid in coalition_client_ids]
         A_S_fc1 = torch.stack(A_states_in_S).mean(dim=0) 
@@ -202,7 +205,6 @@ class FixedBServer:
                 pred = output.argmax(dim=1, keepdim=True)
                 correct += pred.eq(target.view_as(pred)).sum().item()
                 total += len(target)
-        
         v_s_accuracy = 100. * correct / total if total > 0 else 0
         logging.info(f"           [Shapley] V(S={list(coalition_tuple)}) = {v_s_accuracy:.4f}%")
         return v_s_accuracy
@@ -212,18 +214,17 @@ class FixedBServer:
         num_clients = len(client_ids)
         if num_clients == 0: return
         shapley_values = {cid: 0.0 for cid in client_ids}
-        
         logging.info(f"           [Shapley] TMC-Shapley (T={mc_iterations}) 開始...")
         for t in range(mc_iterations):
             random.shuffle(client_ids)
             coalition, v_s_prev = [], self.evaluate_coalition([], b_server_state)
             for client_id in client_ids:
                 coalition.append(client_id)
+                # ★ 修正: all_A_states を {cid: state} 形式で渡す
                 v_s_curr = self.evaluate_coalition({cid: all_A_states[cid] for cid in coalition}, b_server_state)
                 marginal_contribution = v_s_curr - v_s_prev
                 shapley_values[client_id] += marginal_contribution
                 v_s_prev = v_s_curr
-        
         logging.info("[Server] Shapley Values (TMC) 算出完了:")
         for client_id in shapley_values:
             shapley_values[client_id] /= mc_iterations
@@ -237,14 +238,11 @@ class FixedBServer:
         if not self.final_shapley_values:
             logging.error("[Proxy Validation] Error: 比較対象のShapley値がありません。")
             return
-
         all_g_A_i = [g['A_fc1'] for g in self.all_Gradients_A.values() if g['A_fc1'] is not None]
         if not all_g_A_i:
             logging.error("[Proxy Validation] Error: 有効な勾配(A)がありません。")
             return
-            
         g_global_A = torch.stack(all_g_A_i).mean(dim=0)
-        
         proxy_scores_C_i = {}
         logging.info("[Proxy Validation] 各クライアントの勾配貢献度 (C_i) を計算:")
         for client_id, g_dict in self.all_Gradients_A.items():
@@ -253,7 +251,6 @@ class FixedBServer:
                 c_i = torch.dot(g_A_i.flatten(), g_global_A.flatten()).item()
                 proxy_scores_C_i[client_id] = c_i
                 logging.info(f"         Client {client_id}: C_i = {c_i:.4e}")
-        
         phi_values, c_values, client_ids = [], [], []
         sorted_client_ids = sorted(self.final_shapley_values.keys())
         for cid in sorted_client_ids:
@@ -261,29 +258,98 @@ class FixedBServer:
                 client_ids.append(cid)
                 phi_values.append(self.final_shapley_values[cid])
                 c_values.append(proxy_scores_C_i[cid])
-        
         logging.info("\n" + "=" * 40)
-        logging.info("--- Gradient-based Proxy 検証結果 ---")
+        logging.info("--- (検証1) Gradient-based Proxy 検証結果 ---")
         logging.info("=" * 40)
         logging.info(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'C_i (Proxyスコア)':<17}")
         logging.info("-" * 48)
         for i in range(len(client_ids)):
             logging.info(f"{client_ids[i]:<10} | {phi_values[i]:<17.4f} | {c_values[i]:<17.4e}")
         logging.info("-" * 48)
-        
         if len(phi_values) < 2 or np.std(phi_values) == 0 or np.std(c_values) == 0:
             logging.warning("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
         else:
             corr, p_val = spearmanr(phi_values, c_values)
-            logging.info("\n[相関分析結果]")
+            logging.info("\n[相関分析結果 (Proxy vs Phi)]")
+            logging.info(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})")
+            if corr > 0.8:
+                logging.info("\n[結論] 強い正の相関 (rho > 0.8)。")
+            elif corr > 0.5:
+                 logging.info("\n[結論] 正の相関が見られます。")
+            else:
+                logging.info("\n[結論] 相関が低いか負です。")
+                
+    # ★★★ ここから新しい関数 ★★★
+    def evaluate_individual_client_performance(self, client_id):
+        """
+        特定のクライアントiのA_iを使ったモデル W_0 + B_server * A_i の
+        グローバルテスト精度を計算する
+        """
+        if client_id not in self.all_A_states:
+            logging.warning(f"[LocalAcc Eval] Client {client_id} の A_state がありません。")
+            return 0.0
+        
+        A_i_state = self.all_A_states[client_id]
+        A_i_fc1 = A_i_state['A_fc1']
+        
+        eval_model = copy.deepcopy(self.base_model)
+        eval_model.lora_fc1.A.data = A_i_fc1 # ★ 個別の A_i を設定
+        eval_model.eval()
+        
+        correct, total = 0, 0
+        with torch.no_grad():
+            for data, target in self.test_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output = eval_model(data, b_server_fc1=self.B_server_state['B_server_fc1'])
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+                total += len(target)
+        
+        v_i_accuracy = 100. * correct / total if total > 0 else 0
+        logging.info(f"           [LocalAcc Eval] Client {client_id} (A_i only) Test Acc = {v_i_accuracy:.4f}%")
+        return v_i_accuracy
+
+    def run_local_accuracy_validation(self):
+        """
+        Shapley値 (phi_i) と 個別テスト精度 (Local Acc) の相関を計算する
+        """
+        if not self.final_shapley_values:
+            logging.error("[LocalAcc Validation] Error: 比較対象のShapley値がありません。")
+            return
+
+        local_accuracies = []
+        client_ids = sorted(self.final_shapley_values.keys())
+        
+        logging.info("[LocalAcc Validation] 各クライアントの個別テスト精度 (Local Acc) を計算:")
+        for cid in client_ids:
+            local_acc = self.evaluate_individual_client_performance(cid)
+            local_accuracies.append(local_acc)
+        
+        phi_values = [self.final_shapley_values[cid] for cid in client_ids]
+
+        logging.info("\n" + "=" * 40)
+        logging.info("--- (検証2) Local Accuracy vs Shapley 検証結果 ---")
+        logging.info("=" * 40)
+        logging.info(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'Local Acc (個別精度)':<17}")
+        logging.info("-" * 50)
+        for i in range(len(client_ids)):
+            logging.info(f"{client_ids[i]:<10} | {phi_values[i]:<17.4f} | {local_accuracies[i]:<17.4f}%")
+        logging.info("-" * 50)
+        
+        if len(phi_values) < 2 or np.std(phi_values) == 0 or np.std(local_accuracies) == 0:
+            logging.warning("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
+        else:
+            corr, p_val = spearmanr(phi_values, local_accuracies)
+            logging.info("\n[相関分析結果 (Local Acc vs Phi)]")
             logging.info(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})")
             
             if corr > 0.8:
-                logging.info("\n[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。")
-            elif corr > 0.5:
-                 logging.info("\n[結論] 正の相関が見られますが、基準 (rho > 0.8) には達していません。")
+                logging.info("\n[結論] 強い正の相関。Shapley値は個別のA_iの性能をよく反映しています。")
+            elif corr > 0.0:
+                logging.info("\n[結論] 正の相関が見られます。")
             else:
-                logging.info("\n[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。")
+                logging.info("\n[結論] 相関が低いか負であり、Shapley値は個別のA_iの性能を反映していません。")
+    # ★★★ ここまで新しい関数 ★★★
 
     def evaluate_global_model(self):
         if not self.all_A_states: 
@@ -307,7 +373,6 @@ class FixedBServer:
 
     def clear_round_data(self):
         self.all_A_states = {}
-        self.all_Rewards = {}
         self.all_Gradients_A = {}
 
 # --- 5. [パート1] メイン学習 実行関数 ---
@@ -325,7 +390,6 @@ def run_main_training(config, all_datasets):
     for param in base_model.parameters(): 
         param.requires_grad = False
     
-    # ★ 修正: FixedBServer を使用
     server = FixedBServer(
         base_model, 
         rank=config['rank'], 
@@ -335,11 +399,17 @@ def run_main_training(config, all_datasets):
 
     clients = []
     actual_num_clients = len(client_dataloaders)
+    
+    # ★ 修正: config から client_lr を取得
+    client_lr = config.get('client_lr', 0.01)
+    logging.info(f"[Main] Client LR: {client_lr}")
+    
     for i in range(actual_num_clients):
         local_model = copy.deepcopy(base_model)
         for param_group in local_model.get_lora_parameters():
             param_group['params'].requires_grad = True
-        clients.append(Client(i, client_dataloaders[i], local_model, device=device))
+        # ★ 修正: Client に client_lr を渡す
+        clients.append(Client(i, client_dataloaders[i], local_model, device=device, client_lr=client_lr))
     
     logging.info(f"[Main] {len(clients)} クライアントの初期化完了。")
     logging.info("-" * 30)
@@ -352,14 +422,12 @@ def run_main_training(config, all_datasets):
         logging.info(f"\n--- Round {t+1}/{config['num_rounds']} ---")
         server.clear_round_data()
         
-        # ★ 修正: SPSA (B+, B-) は削除
-        current_b_state = server.B_server_state # 固定された B を取得
+        current_b_state = server.B_server_state 
 
         for i in range(actual_num_clients):
             client = clients[i]
             
-            # ★ 修正: 固定 B を渡す
-            g_A_i, R_i = client.local_train(
+            g_A_i = client.local_train(
                 local_epochs=config['local_epochs'],
                 b_server_fixed=current_b_state
             )
@@ -367,18 +435,13 @@ def run_main_training(config, all_datasets):
             A_i_state = client.model.get_lora_state()
             server.all_A_states[i] = A_i_state
             server.all_Gradients_A[i] = g_A_i 
-            server.all_Rewards[i] = R_i # （SPSAでは使われないが、ログ用に一応保持）
 
         compute_shapley_round = (t + 1) == config['num_rounds']
         
-        # ★ 修正: SPSAパラメータは不要
         server.aggregate_and_update(
             compute_shapley_round,
             mc_iterations=config.get('shapley_tmc_iterations', 20)
         )
-        
-        avg_reward = np.mean(list(server.all_Rewards.values())) if server.all_Rewards else 0.0
-        logging.info(f"         [Server] Round {t+1} Avg Reward (All Clients): {avg_reward:.2f}%")
 
         if (t + 1) % eval_interval == 0 or (t + 1) == config['num_rounds']:
             logging.info(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
@@ -397,7 +460,7 @@ if __name__ == "__main__":
     
     setup_logging(logfile='experiment_fixed_b.log')
     
-    config_file = "config.yml" # ★ 修正: configファイル名
+    config_file = "config.yml" 
     try:
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
@@ -414,6 +477,7 @@ if __name__ == "__main__":
     logging.info(f"\n[Main] Using device: {device}")
     
     logging.info("\n[Main] 共通データセットを準備します...")
+    # ★ 修正: ResNet/ViT ではないので、Resize は不要
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
