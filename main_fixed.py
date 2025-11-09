@@ -397,7 +397,7 @@ if __name__ == "__main__":
     
     setup_logging(logfile='experiment_fixed_b.log')
     
-    config_file = "config_fixed_b.yml" # ★ 修正: configファイル名
+    config_file = "config.yml" # ★ 修正: configファイル名
     try:
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
