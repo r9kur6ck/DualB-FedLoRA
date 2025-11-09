@@ -7,7 +7,7 @@
 #
 
 # --- 1. Global Experiment Settings ---
-experiment_name: "01" 
+experiment_name: "02" 
 num_clients: 5
 num_rounds: 20
 local_epochs: 2
