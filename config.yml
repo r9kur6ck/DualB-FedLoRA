@@ -1,22 +1,82 @@
-# config.yml
-# Hyperparameters for FedSGD-LoRA (ResNet-50)
+# --- Master Config: DualB-FedLoRA Experiment Suite ---
+#
+# この設定ファイルは、リポジトリ内のすべての実験スクリプト
+# (simpleCNN/*, resnet/*, vit/*) から共通して読み込まれることを想定しています。
+#
 
-# --- Experiment Settings ---
+# --- 1. Global Experiment Settings ---
+# ログファイル名などに使われます
+experiment_name: "FixedB_ResNet" 
 num_clients: 5
 num_rounds: 20
 local_epochs: 2
-non_iid_alpha: 0.3
+# Non-IIDの度合い (0.3 や 0.5 が一般的)
+non_iid_alpha: 0.5
+# グローバルテスト精度を評価する間隔 (ラウンドごと)
+eval_interval: 1
 
-# --- LoRA Settings ---
+
+# --- 2. Model Configuration ---
+# 実行するスクリプトに合わせて設定してください
+#
+# Options: 
+#   'SimpleCNN' (simpleCNN/ 内のスクリプト用)
+#   'ResNet'    (resnet/ 内のスクリプト用)
+#   'ViT'       (vit/ 内のスクリプト用)
+model_type: 'ResNet' 
+
+# ResNet/ViT が使用する入力画像の解像度 (ピクセル)
+# (SimpleCNNの場合は無視されます)
+image_size: 64 # (例: 128 または 224)
+
+
+# --- 3. LoRA Configuration ---
 rank: 4
-# (lora_target_modules は、この実装では使いません)
 
-# --- Learning Rate Settings ---
-server_lr: 0.1
+# (model_typeが 'ViT' の場合のみ使用)
+# LoRA化するViTのモジュールを選択
+# Options: ['head'] (分類ヘッドのみ) or ['mlp', 'head'] (MLP層とヘッド)
+lora_target_modules: ['mlp', 'head']
+
+
+# --- 4. Server Update Strategy ---
+# 実行するスクリプトの戦略に合わせて設定してください
+#
+# Options:
+#   'FixedB': B_server を固定 (main_fixed.py)
+#   'FedSGD': B_server を FedSGD で更新 (main_sgd.py)
+#   'SPSA': B_server を 通常のSPSA で更新 (main_ospsa.py)
+#   'SW-SPSA': B_server を Shapley加重SPSA で更新 (main_wspsa.py)
+#   'DualB-SPSA': 旧式の Dual-B 版 (main_gdp.py)
+server_update_strategy: 'FixedB' 
+
+
+# --- 5. Learning Rates & Optimizer Params ---
+
+# クライアント側の学習率 (A_i の更新用)
 client_lr: 0.01
 
-# --- Validation Settings ---
+# --- FedSGD 専用 ---
+# サーバ側の学習率 (B_server の更新用)
+# (strategy: 'FedSGD' の時のみ使用)
+server_lr: 0.1
+
+# --- SPSA / SW-SPSA 専用 ---
+# SPSA の学習率
+# (strategy: 'SPSA', 'SW-SPSA', 'DualB-SPSA' の時のみ使用)
+spsa_eta_b: 0.0001
+spsa_epsilon: 0.1
+
+# 慣性項
+# (strategy: 'SW-SPSA' の時のみ使用)
+server_momentum: 0.9
+
+
+# --- 6. Validation Settings ---
+# Shapley値計算のモンテカルロ反復回数
 shapley_tmc_iterations: 20
 
-# --- Evaluation Settings ---
-eval_interval: 1
+# (main_sgd.py や main_sw_spsa.py などで有効)
+# Proxy検証(C_i)に使う勾配を選択
+# Options: 'g_A' (Aの勾配) or 'g_B' (Bの勾配)
+proxy_validation_type: 'g_A'
