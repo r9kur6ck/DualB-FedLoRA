@@ -1,5 +1,5 @@
-# config.yml
-# Hyperparameters for Shapley-Weighted SPSA
+# config_fixed_b.yml
+# Hyperparameters for Fixed-B Validation
 
 # --- Experiment Settings ---
 num_clients: 5
@@ -10,10 +10,12 @@ non_iid_alpha: 0.3
 # --- LoRA Settings ---
 rank: 4
 
-# --- Server SPSA Settings ---
-spsa_epsilon: 0.1
-spsa_eta_b: 0.0001 # 1e-4 (SPSAの学習率)
-server_momentum: 0.9 # 慣性項の強さ
+# --- Server Settings ---
+# (サーバは B を更新しないため、学習率パラメータは不要)
+# server_lr: 0.1
+# spsa_epsilon: 0.1
+# spsa_eta_b: 0.0001
+# server_momentum: 0.9
 
 # --- Validation Settings ---
 shapley_tmc_iterations: 20
