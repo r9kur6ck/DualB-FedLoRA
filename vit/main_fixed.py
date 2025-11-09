@@ -13,9 +13,10 @@ from scipy.stats import pearsonr, spearmanr
 import json 
 import logging 
 import sys 
+import os # ★ 1. osモジュールをインポート
 
 # --- 0. ★ ロギング設定 ---
-def setup_logging(logfile='experiment_fixed_b_vit_multi.log'): # ログファイル名変更
+def setup_logging(logfile='experiment_fixed_b_vit_multi.log'): 
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     formatter = logging.Formatter(
@@ -194,7 +195,6 @@ class Client:
         self.criterion = nn.CrossEntropyLoss()
         self.device = device
 
-    # ★ 修正: B_server の勾配計算ロジックを削除
     def local_train(self, local_epochs, b_server_states):
         self.model.train()
         total_loss, total_batches = 0.0, 0
@@ -211,7 +211,6 @@ class Client:
                 output = self.model(data, b_server_states=b_server_states) 
                 loss = self.criterion(output, target)
                 
-                # loss.backward() は A の勾配のみ計算
                 loss.backward()
                 self.optimizer.step()
                 
@@ -231,23 +230,21 @@ class Client:
                 if module.A.grad is not None:
                     g_A_dict[clean_name] = module.A.grad.clone().detach()
         
-        # ★ 修正: g_B_dict は返さない
         return g_A_dict
 
 # --- 4. [パート1] B行列固定サーバ (Server) ---
 class FixedBServer:
-    
-    # ★ 修正: server_lr は不要
     def __init__(self, b_server_template, test_loader, device):
         
-        # ★ 修正: B_server_states を nn.ParameterDict ではなく、
+        # B_server_states を nn.ParameterDict ではなく、
         # 固定テンソル (requires_grad=False) の辞書として初期化
         self.B_server_states = {}
         for name, shape in b_server_template.items():
-            b_tensor_gpu = (torch.randn(shape) / shape[1]).to(device)
+            b_tensor_gpu = torch.empty(shape, device=device)
+            torch.nn.init.orthogonal_(b_tensor_gpu) # 直交行列で初期化
             self.B_server_states[name] = b_tensor_gpu.requires_grad_(False)
             
-        # ★ 修正: オプティマイザは不要
+        logging.info(f"[Server] B_server (全 {len(b_server_template)} 層) を直交行列で初期化しました。")
         
         self.all_A_states = {}
         self.base_model_copy = None 
@@ -255,26 +252,22 @@ class FixedBServer:
         self.v_cache, self.final_shapley_values = {}, {}
         self.device = device
         self.all_Gradients_A = {} 
-        # ★ 修正: all_Gradients_B は不要
         
         logging.info(f"[Server] Fixed-B (Multi-B ViT) サーバを初期化しました。")
 
-    # ★ 修正: B の更新ロジックをすべて削除
     def aggregate_and_update(self, compute_shapley_round, mc_iterations):
-        
         logging.info(f"         [Server] B_server は固定されているため、更新をスキップします。")
         
         if compute_shapley_round:
             logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
             self.compute_shapley_tmc(self.all_A_states, self.B_server_states, mc_iterations=mc_iterations)
             
-            logging.info("\n[Server] Gradient-based Proxy Validation を開始...")
+            logging.info("\n[Server] (検証1) Gradient-based Proxy Validation を開始...")
             self.run_gradient_proxy_validation()
+            
+            # (検証2: Local Accuracy は、このアーキテクチャでは省略)
         
         self.v_cache.clear()
-
-    # (evaluate_coalition, compute_shapley_tmc, run_gradient_proxy_validation, 
-    #  evaluate_global_model は変更なし)
 
     def evaluate_coalition(self, coalition_client_ids, b_server_states):
         coalition_tuple = tuple(sorted(coalition_client_ids))
@@ -442,12 +435,11 @@ class FixedBServer:
     def clear_round_data(self):
         self.all_A_states = {}
         self.all_Gradients_A = {}
-        # self.all_Gradients_B = [] # Bの勾配は不要
 
 # --- 5. [パート1] メイン学習 実行関数 ---
 def run_main_training(config, all_datasets):
     logging.info(f"--- [パート1] B-Fixed (Multi-B ViT) 版 ---")
-    logging.info(f"Clients: {config['num_clients']}, Rounds: {config['num_rounds']}, Rank: {config['rank']}")
+    logging.info(f"Clients: {config.get('num_clients', 5)}, Rounds: {config.get('num_rounds', 20)}, Rank: {config.get('rank', 4)}")
     logging.info("-" * 30)
 
     device = all_datasets['device']
@@ -457,7 +449,7 @@ def run_main_training(config, all_datasets):
     lora_target_modules = config.get('lora_target_modules', ['head'])
     
     base_model = ViT_LoRA_Multi(
-        rank=config['rank'], 
+        rank=config.get('rank', 4), 
         num_classes=10, 
         lora_target_modules=lora_target_modules
     ).to(device)
@@ -472,7 +464,6 @@ def run_main_training(config, all_datasets):
             
     logging.info(f"[Main] サーバが管理するB行列 (計 {len(b_server_template)} 個): {list(b_server_template.keys())}")
 
-    # ★ 修正: FixedBServer を使用
     server = FixedBServer(
         b_server_template, 
         test_loader=test_loader, 
@@ -494,11 +485,11 @@ def run_main_training(config, all_datasets):
     logging.info("-" * 30)
 
     start_time = time.time()
-    eval_interval = config.get('eval_interval', 5)
+    eval_interval = config.get('eval_interval', 1)
     logging.info(f"[Main] グローバルテスト精度を {eval_interval} ラウンドごとに計算します。")
     
-    for t in range(config['num_rounds']):
-        logging.info(f"\n--- Round {t+1}/{config['num_rounds']} ---")
+    for t in range(config.get('num_rounds', 20)):
+        logging.info(f"\n--- Round {t+1}/{config.get('num_rounds', 20)} ---")
         server.clear_round_data()
         
         current_b_server_state = server.B_server_states
@@ -506,25 +497,23 @@ def run_main_training(config, all_datasets):
         for i in range(actual_num_clients):
             client = clients[i]
             
-            # ★ 修正: g_B_dict は受け取らない
             g_A_dict = client.local_train(
-                local_epochs=config['local_epochs'],
+                local_epochs=config.get('local_epochs', 2),
                 b_server_states=current_b_server_state
             )
             
             A_i_state_dict = client.model.get_lora_state_dict()
             server.all_A_states[i] = A_i_state_dict
             server.all_Gradients_A[i] = g_A_dict
-            # ★ 修正: g_B_dict の送信は削除
 
-        compute_shapley_round = (t + 1) == config['num_rounds']
+        compute_shapley_round = (t + 1) == config.get('num_rounds', 20)
         
         server.aggregate_and_update(
             compute_shapley_round,
             mc_iterations=config.get('shapley_tmc_iterations', 20)
         )
 
-        if (t + 1) % eval_interval == 0 or (t + 1) == config['num_rounds']:
+        if (t + 1) % eval_interval == 0 or (t + 1) == config.get('num_rounds', 20):
             logging.info(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
             server.base_model_copy = copy.deepcopy(clients[0].model) 
             current_test_accuracy = server.evaluate_global_model()
@@ -539,28 +528,54 @@ def run_main_training(config, all_datasets):
 # --- 9. 統合メイン実行ブロック ---
 if __name__ == "__main__":
     
-    setup_logging(logfile='experiment_fixed_b_vit_multi.log') 
-    
-    config_file = "config.yml"
+    # ★ 2. このスクリプトのディレクトリパスを取得
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    # ★ 3. ルートディレクトリ（親ディレクトリ）の config.yml を指す
+    CONFIG_PATH = os.path.join(SCRIPT_DIR, '..', 'config.yml')
+
+    config = {}
     try:
-        with open(config_file, 'r') as f:
+        with open(CONFIG_PATH, 'r') as f:
             config = yaml.safe_load(f)
-        logging.info(f"[Main] {config_file} から設定をロードしました。")
-        logging.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
     except FileNotFoundError:
-        logging.error(f"[Error] {config_file} が見つかりません。")
-        exit()
+        try:
+            with open("config.yml", 'r') as f:
+                config = yaml.safe_load(f)
+            CONFIG_PATH = "config.yml"
+            SCRIPT_DIR = "."
+        except FileNotFoundError:
+            print(f"[FATAL] config.yml が見つかりません。パスを確認: {CONFIG_PATH}")
+            exit()
     except Exception as e:
-        logging.error(f"[Error] {config_file} の読み込みに失敗しました: {e}")
+        print(f"[FATAL] {CONFIG_PATH} の読み込みに失敗しました: {e}")
         exit()
+
+    # ★ 4. ログファイルの出力先をルートの 'logs' フォルダに設定
+    ROOT_DIR = os.path.dirname(SCRIPT_DIR) if SCRIPT_DIR != "." else "."
+    LOG_DIR = os.path.join(ROOT_DIR, 'logs')
+    os.makedirs(LOG_DIR, exist_ok=True)
+    
+    experiment_name = config.get('experiment_name', 'experiment')
+    log_filename = f"{experiment_name}_vit_fixed.log" # スクリプト固有の名前に
+    LOG_PATH = os.path.join(LOG_DIR, log_filename)
+    
+    setup_logging(logfile=LOG_PATH)
+    
+    # --- ここから通常の実行 ---
+    logging.info(f"[Main] {CONFIG_PATH} から設定をロードしました。")
+    logging.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"\n[Main] Using device: {device}")
     
     logging.info("\n[Main] 共通データセットを準備します...")
     
+    # ★ 5. config から image_size を読み込む (デフォルト 128)
+    image_size = config.get('image_size', 128)
+    logging.info(f"[Main] 入力解像度を {image_size}x{image_size} に設定します。")
+    
     transform = transforms.Compose([
-        transforms.Resize((224, 224)), 
+        transforms.Resize((image_size, image_size)), 
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -572,10 +587,13 @@ if __name__ == "__main__":
         logging.error(f"[Error] CIFAR-10データセットのダウンロードに失敗しました: {e}")
         exit()
         
-    client_dataloaders = get_non_iid_data(config['num_clients'], train_dataset, alpha=config['non_iid_alpha'])
-    test_loader = DataLoader(test_dataset, batch_size=64, num_workers=2, pin_memory=True) 
+    client_dataloaders = get_non_iid_data(config.get('num_clients', 5), train_dataset, alpha=config.get('non_iid_alpha', 0.3))
     
-    if len(client_dataloaders) != config['num_clients']:
+    batch_size = 32 if image_size > 128 else 64
+    logging.info(f"[Main] テストローダーのバッチサイズ: {batch_size}")
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=2, pin_memory=True) 
+    
+    if len(client_dataloaders) != config.get('num_clients', 5):
         logging.warning(f"[Main] Warning: データ割り当ての結果、クライアント数が {len(client_dataloaders)} になりました。")
         config['num_clients'] = len(client_dataloaders)
 

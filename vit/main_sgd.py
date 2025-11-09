@@ -13,9 +13,10 @@ from scipy.stats import pearsonr, spearmanr
 import json 
 import logging 
 import sys 
+import os # ★ 1. osモジュールをインポート
 
 # --- 0. ★ ロギング設定 ---
-def setup_logging(logfile='experiment_fedavg_vit_multi.log'):
+def setup_logging(logfile='experiment_fedsgd_vit_multi.log'): 
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     formatter = logging.Formatter(
@@ -126,10 +127,7 @@ class ViT_LoRA_Multi(nn.Module):
         batch_class_token = self.vit.class_token.expand(n, -1, -1)
         x = torch.cat([batch_class_token, x], dim=1)
         
-        # ★★★ 修正 ★★★
-        # self.vit ではなく、self.vit.encoder の属性
         x = x + self.vit.encoder.pos_embedding
-        # ★★★ 修正ここまで ★★★
         
         for i, layer in enumerate(self.vit.encoder.layers):
             x_norm1 = layer.ln_1(x)
@@ -464,7 +462,7 @@ class FedSGDServer:
 # --- 5. [パート1] メイン学習 実行関数 ---
 def run_main_training(config, all_datasets):
     logging.info(f"--- [パート1] FedSGD (Multi-B ViT) 版 ---")
-    logging.info(f"Clients: {config['num_clients']}, Rounds: {config['num_rounds']}, Rank: {config['rank']}")
+    logging.info(f"Clients: {config.get('num_clients', 5)}, Rounds: {config.get('num_rounds', 20)}, Rank: {config.get('rank', 4)}")
     logging.info("-" * 30)
 
     device = all_datasets['device']
@@ -474,7 +472,7 @@ def run_main_training(config, all_datasets):
     lora_target_modules = config.get('lora_target_modules', ['head'])
     
     base_model = ViT_LoRA_Multi(
-        rank=config['rank'], 
+        rank=config.get('rank', 4), 
         num_classes=10, 
         lora_target_modules=lora_target_modules
     ).to(device)
@@ -511,11 +509,11 @@ def run_main_training(config, all_datasets):
     logging.info("-" * 30)
 
     start_time = time.time()
-    eval_interval = config.get('eval_interval', 5)
+    eval_interval = config.get('eval_interval', 1)
     logging.info(f"[Main] グローバルテスト精度を {eval_interval} ラウンドごとに計算します。")
     
-    for t in range(config['num_rounds']):
-        logging.info(f"\n--- Round {t+1}/{config['num_rounds']} ---")
+    for t in range(config.get('num_rounds', 20)):
+        logging.info(f"\n--- Round {t+1}/{config.get('num_rounds', 20)} ---")
         server.clear_round_data()
         
         current_b_server_state = server.B_server_states
@@ -524,7 +522,7 @@ def run_main_training(config, all_datasets):
             client = clients[i]
             
             g_A_dict, g_B_dict = client.local_train(
-                local_epochs=config['local_epochs'],
+                local_epochs=config.get('local_epochs', 2),
                 b_server_states=current_b_server_state
             )
             
@@ -533,14 +531,14 @@ def run_main_training(config, all_datasets):
             server.all_Gradients_A[i] = g_A_dict
             server.all_Gradients_B.append(g_B_dict)
 
-        compute_shapley_round = (t + 1) == config['num_rounds']
+        compute_shapley_round = (t + 1) == config.get('num_rounds', 20)
         
         server.aggregate_and_update(
             compute_shapley_round,
             mc_iterations=config.get('shapley_tmc_iterations', 20)
         )
 
-        if (t + 1) % eval_interval == 0 or (t + 1) == config['num_rounds']:
+        if (t + 1) % eval_interval == 0 or (t + 1) == config.get('num_rounds', 20):
             logging.info(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
             server.base_model_copy = copy.deepcopy(clients[0].model) 
             current_test_accuracy = server.evaluate_global_model()
@@ -555,28 +553,54 @@ def run_main_training(config, all_datasets):
 # --- 9. 統合メイン実行ブロック ---
 if __name__ == "__main__":
     
-    setup_logging(logfile='experiment_fedsgd_vit_multi.log') 
-    
-    config_file = "config.yml"
+    # ★ 2. このスクリプトのディレクトリパスを取得
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    # ★ 3. ルートディレクトリ（親ディレクトリ）の config.yml を指す
+    CONFIG_PATH = os.path.join(SCRIPT_DIR, '..', 'config.yml')
+
+    config = {}
     try:
-        with open(config_file, 'r') as f:
+        with open(CONFIG_PATH, 'r') as f:
             config = yaml.safe_load(f)
-        logging.info(f"[Main] {config_file} から設定をロードしました。")
-        logging.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
     except FileNotFoundError:
-        logging.error(f"[Error] {config_file} が見つかりません。")
-        exit()
+        try:
+            with open("config.yml", 'r') as f:
+                config = yaml.safe_load(f)
+            CONFIG_PATH = "config.yml"
+            SCRIPT_DIR = "."
+        except FileNotFoundError:
+            print(f"[FATAL] config.yml が見つかりません。パスを確認: {CONFIG_PATH}")
+            exit()
     except Exception as e:
-        logging.error(f"[Error] {config_file} の読み込みに失敗しました: {e}")
+        print(f"[FATAL] {CONFIG_PATH} の読み込みに失敗しました: {e}")
         exit()
+
+    # ★ 4. ログファイルの出力先をルートの 'logs' フォルダに設定
+    ROOT_DIR = os.path.dirname(SCRIPT_DIR) if SCRIPT_DIR != "." else "."
+    LOG_DIR = os.path.join(ROOT_DIR, 'logs')
+    os.makedirs(LOG_DIR, exist_ok=True)
+    
+    experiment_name = config.get('experiment_name', 'experiment')
+    log_filename = f"{experiment_name}_vit_sgd.log" # スクリプト固有の名前に
+    LOG_PATH = os.path.join(LOG_DIR, log_filename)
+    
+    setup_logging(logfile=LOG_PATH)
+    
+    # --- ここから通常の実行 ---
+    logging.info(f"[Main] {CONFIG_PATH} から設定をロードしました。")
+    logging.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"\n[Main] Using device: {device}")
     
     logging.info("\n[Main] 共通データセットを準備します...")
     
+    # ★ 5. config から image_size を読み込む (デフォルト 128)
+    image_size = config.get('image_size', 128)
+    logging.info(f"[Main] 入力解像度を {image_size}x{image_size} に設定します。")
+    
     transform = transforms.Compose([
-        transforms.Resize((224, 224)), 
+        transforms.Resize((image_size, image_size)), 
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -588,10 +612,13 @@ if __name__ == "__main__":
         logging.error(f"[Error] CIFAR-10データセットのダウンロードに失敗しました: {e}")
         exit()
         
-    client_dataloaders = get_non_iid_data(config['num_clients'], train_dataset, alpha=config['non_iid_alpha'])
-    test_loader = DataLoader(test_dataset, batch_size=64, num_workers=2, pin_memory=True) 
+    client_dataloaders = get_non_iid_data(config.get('num_clients', 5), train_dataset, alpha=config.get('non_iid_alpha', 0.3))
     
-    if len(client_dataloaders) != config['num_clients']:
+    batch_size = 32 if image_size > 128 else 64
+    logging.info(f"[Main] テストローダーのバッチサイズ: {batch_size}")
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=2, pin_memory=True) 
+    
+    if len(client_dataloaders) != config.get('num_clients', 5):
         logging.warning(f"[Main] Warning: データ割り当ての結果、クライアント数が {len(client_dataloaders)} になりました。")
         config['num_clients'] = len(client_dataloaders)
 
