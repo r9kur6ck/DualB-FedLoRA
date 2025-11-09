@@ -76,7 +76,6 @@ class LoRALayer(nn.Module):
         lora_x = b_server @ A_x
         return w0_x + lora_x.T
 
-# ★ 修正: 選択的にレイヤーを差し替えるヘルパー
 def patch_vit_layers(vit_model, rank, lora_target_modules):
     logging.info(f"[Model] LoRAターゲット: {lora_target_modules}")
     
@@ -105,7 +104,6 @@ def patch_vit_layers(vit_model, rank, lora_target_modules):
         
     return vit_model
 
-# ★ 修正: ViT_LoRA_Multi モデル
 class ViT_LoRA_Multi(nn.Module):
     def __init__(self, rank=4, num_classes=10, lora_target_modules=None):
         super().__init__()
@@ -122,15 +120,17 @@ class ViT_LoRA_Multi(nn.Module):
             
         self.vit = patch_vit_layers(self.vit, rank, lora_target_modules)
 
-    # ★ 修正: b_server の *辞書* を受け取り、動的にBを注入
     def forward(self, x, b_server_states=None):
         x = self.vit._process_input(x)
         n = x.shape[0]
         batch_class_token = self.vit.class_token.expand(n, -1, -1)
         x = torch.cat([batch_class_token, x], dim=1)
-        x = x + self.vit.positional_embedding
         
-        # ★ 修正: Encoder のフォワードを手動で実行
+        # ★★★ 修正 ★★★
+        # "positional_embedding" -> "pos_embedding"
+        x = x + self.vit.pos_embedding
+        # ★★★ 修正ここまで ★★★
+        
         for i, layer in enumerate(self.vit.encoder.layers):
             x_norm1 = layer.ln_1(x)
             x_attn, _ = layer.self_attention(x_norm1, x_norm1, x_norm1, need_weights=False)
@@ -139,7 +139,6 @@ class ViT_LoRA_Multi(nn.Module):
             
             x_norm2 = layer.ln_2(x)
             
-            # ★ 修正: キー名を `.` から `_` に変更
             b_0_key = f"encoder_layers_{i}_mlp_0"
             b_3_key = f"encoder_layers_{i}_mlp_3"
             
@@ -184,7 +183,6 @@ class ViT_LoRA_Multi(nn.Module):
         state_dict = {}
         for name, module in self.vit.named_modules():
             if isinstance(module, LoRALayer):
-                # ★ 修正: キー名を `.` から `_` に変更
                 clean_name = name.replace("vit.", "").replace(".", "_")
                 state_dict[clean_name] = module.A.data
         return state_dict
@@ -232,7 +230,6 @@ class Client:
         g_A_dict = {}
         g_B_dict = {}
         
-        # ★ 修正: キー名を `.` から `_` に変更
         for name, module in self.model.vit.named_modules():
             if isinstance(module, LoRALayer):
                 clean_name = name.replace("vit.", "").replace(".", "_")
@@ -250,7 +247,6 @@ class FedSGDServer:
     def __init__(self, b_server_template, test_loader, device, server_lr):
         self.B_server_states = nn.ParameterDict()
         for name, shape in b_server_template.items():
-            # ★ 修正: キー名 (name) は既に _ 形式になっている
             b_tensor_gpu = (torch.randn(shape) / shape[1]).to(device)
             self.B_server_states[name] = nn.Parameter(b_tensor_gpu)
             
@@ -297,14 +293,12 @@ class FedSGDServer:
         
         self.v_cache.clear()
 
-    # ★ 修正: A_S 辞書のキーも _ 形式
     def evaluate_coalition(self, coalition_client_ids, b_server_states):
         coalition_tuple = tuple(sorted(coalition_client_ids))
         if coalition_tuple in self.v_cache: return self.v_cache[coalition_tuple]
         if not coalition_client_ids: return 0.0
 
         A_S_dict = {}
-        # 最初のクライアントのA辞書からキーを取得
         if not self.all_A_states: 
              logging.error("[Shapley] all_A_states が空です。")
              return 0.0
@@ -322,7 +316,7 @@ class FedSGDServer:
         
         for name, module in eval_model.vit.named_modules():
              if isinstance(module, LoRALayer):
-                clean_name = name.replace("vit.", "").replace(".", "_") # ★ _ 形式
+                clean_name = name.replace("vit.", "").replace(".", "_")
                 if clean_name in A_S_dict:
                     module.A.data = A_S_dict[clean_name]
 
@@ -363,7 +357,6 @@ class FedSGDServer:
             logging.info(f"         Client {client_id}: phi = {shapley_values[client_id]:.4f}")
         self.final_shapley_values = shapley_values
 
-    # ★ 修正: g_A (Aの勾配) も辞書として処理
     def run_gradient_proxy_validation(self):
         if not self.all_Gradients_A:
             logging.error("[Proxy Validation] Error: 検証用の勾配(A)がありません。")
@@ -373,7 +366,6 @@ class FedSGDServer:
             return
             
         g_A_global_dict = {}
-        # 最初のクライアントの勾配辞書からキーを取得
         if not self.all_Gradients_A:
              logging.error("[Proxy Validation] all_Gradients_A が空です。")
              return
@@ -396,7 +388,6 @@ class FedSGDServer:
             proxy_scores_C_i[client_id] = c_i_total
             logging.info(f"         Client {client_id}: C_i = {c_i_total:.4e}")
         
-        # (以降の相関計算ロジックは変更なし)
         phi_values, c_values, client_ids = [], [], []
         sorted_client_ids = sorted(self.final_shapley_values.keys())
         for cid in sorted_client_ids:
@@ -434,7 +425,6 @@ class FedSGDServer:
             return 0.0
 
         A_global_dict = {}
-        # 最初のクライアントのA辞書からキーを取得
         if not self.all_A_states:
              logging.error("[Evaluate] all_A_states が空です。")
              return 0.0
@@ -451,7 +441,7 @@ class FedSGDServer:
         
         for name, module in eval_model.vit.named_modules():
              if isinstance(module, LoRALayer):
-                clean_name = name.replace("vit.", "").replace(".", "_") # ★ _ 形式
+                clean_name = name.replace("vit.", "").replace(".", "_")
                 if clean_name in A_global_dict:
                     module.A.data = A_global_dict[clean_name]
 
@@ -492,7 +482,6 @@ def run_main_training(config, all_datasets):
     b_server_template = {}
     for name, module in base_model.vit.named_modules():
         if isinstance(module, LoRALayer):
-            # ★ 修正: キー名を `.` から `_` に変更
             clean_name = name.replace("vit.", "").replace(".", "_")
             k = module.original_layer.out_features
             r = module.rank
