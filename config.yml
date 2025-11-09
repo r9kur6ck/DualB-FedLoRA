@@ -1,5 +1,5 @@
-# config_fixed_b.yml
-# Hyperparameters for Fixed-B Validation
+# config.yml
+# Hyperparameters for FedSGD-LoRA (ViT Multi-Layer)
 
 # --- Experiment Settings ---
 num_clients: 5
@@ -9,13 +9,14 @@ non_iid_alpha: 0.3
 
 # --- LoRA Settings ---
 rank: 4
+# ★ 修正: LoRA化するモジュールを選択
+# 'mlp' (ViTの全Transformerブロック内MLP層)
+# 'head' (最後の分類ヘッド)
+lora_target_modules: ['mlp', 'head']
 
-# --- Server Settings ---
-# (サーバは B を更新しないため、学習率パラメータは不要)
-# server_lr: 0.1
-# spsa_epsilon: 0.1
-# spsa_eta_b: 0.0001
-# server_momentum: 0.9
+# --- Learning Rate Settings ---
+server_lr: 0.1
+client_lr: 0.01
 
 # --- Validation Settings ---
 shapley_tmc_iterations: 20

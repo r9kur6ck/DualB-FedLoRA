@@ -1,0 +1,606 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torchvision
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader, Subset
+import numpy as np
+import copy
+import time
+import random
+import yaml 
+from scipy.stats import pearsonr, spearmanr 
+import json 
+import logging 
+import sys 
+
+# --- 0. ★ ロギング設定 ---
+def setup_logging(logfile='experiment_fedavg_vit_multi.log'):
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    formatter = logging.Formatter(
+        '[%(asctime)s] [%(levelname)s] - %(message)s', 
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    logger.addHandler(stdout_handler)
+    file_handler = logging.FileHandler(logfile, mode='w')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+# --- 1. 共通: データセット準備 (Non-IID) ---
+def get_non_iid_data(num_clients, dataset, alpha=0.3):
+    logging.info(f"[Data] Non-IIDデータ分割を開始 (Alpha={alpha})...")
+    # (中身は変更なし)
+    targets = np.array(dataset.targets)
+    num_classes = len(np.unique(targets))
+    client_indices = [[] for _ in range(num_clients)]
+    indices_by_class = [np.where(targets == i)[0] for i in range(num_classes)]
+    for k in range(num_classes):
+        img_indices = indices_by_class[k]
+        np.random.shuffle(img_indices)
+        proportions = np.random.dirichlet(np.repeat(alpha, num_clients))
+        proportions = (np.cumsum(proportions) * len(img_indices)).astype(int)[:-1]
+        split_indices = np.split(img_indices, proportions)
+        for i in range(num_clients):
+            if len(split_indices) > i:
+                client_indices[i].extend(split_indices[i])
+    client_dataloaders = []
+    total_data = 0
+    for i, indices in enumerate(client_indices):
+        if len(indices) == 0: continue
+        total_data += len(indices)
+        subset = Subset(dataset, indices)
+        loader = DataLoader(subset, batch_size=32, shuffle=True)
+        client_dataloaders.append(loader)
+    logging.info(f"[Data] {len(client_dataloaders)} クライアント分のデータローダーを作成完了。")
+    return client_dataloaders
+
+# --- 2. 共通: モデルとLoRAレイヤーの定義 ---
+class LoRALayer(nn.Module):
+    def __init__(self, original_layer, rank):
+        super().__init__()
+        self.original_layer = original_layer
+        self.rank = rank
+        d, k = self.original_layer.in_features, self.original_layer.out_features
+        self.A = nn.Parameter(torch.zeros(rank, d)) 
+        self.original_layer.weight.requires_grad = False
+    def forward(self, x, b_server=None):
+        w0_x = self.original_layer(x)
+        if b_server is None:
+            return w0_x
+        A_x = self.A @ x.T 
+        lora_x = b_server @ A_x
+        return w0_x + lora_x.T
+
+# ★ 修正: 選択的にレイヤーを差し替えるヘルパー
+def patch_vit_layers(vit_model, rank, lora_target_modules):
+    """
+    ViTモデルの指定されたモジュールをLoRALayerに差し替える
+    """
+    logging.info(f"[Model] LoRAターゲット: {lora_target_modules}")
+    
+    # 1. MLPブロックの差し替え
+    if 'mlp' in lora_target_modules:
+        count = 0
+        for layer in vit_model.encoder.layers:
+            # ViTのMLPは [Linear, GELU, Dropout, Linear, Dropout]
+            original_mlp_0 = layer.mlp[0]
+            layer.mlp[0] = LoRALayer(original_mlp_0, rank)
+            
+            original_mlp_3 = layer.mlp[3]
+            layer.mlp[3] = LoRALayer(original_mlp_3, rank)
+            count += 2
+        logging.info(f"[Model] {count} 層のMLPブロックをLoRA化しました。")
+
+    # 2. 分類ヘッドの差し替え
+    if 'head' in lora_target_modules:
+        hidden_dim = vit_model.hidden_dim
+        num_classes = 10
+        original_head_layer = nn.Linear(hidden_dim, num_classes)
+        vit_model.heads = LoRALayer(original_head_layer, rank)
+        logging.info(f"[Model] 分類ヘッド (Linear {hidden_dim}->{num_classes}) をLoRA化しました。")
+    else:
+        # LoRA化しない場合でも、ImageNet(1000)からCIFAR(10)にヘッドを交換する必要がある
+        hidden_dim = vit_model.hidden_dim
+        num_classes = 10
+        vit_model.heads = nn.Linear(hidden_dim, num_classes)
+        logging.info(f"[Model] 分類ヘッドを (LoRA化せず) {num_classes} クラス用に交換しました。")
+        # 注意: この場合、ヘッドはフリーズされません (通常のFLとして学習されます)
+        
+    return vit_model
+
+# ★ 修正: ViT_LoRA_Multi モデル
+class ViT_LoRA_Multi(nn.Module):
+    # ★ 修正: lora_target_modules を受け取る
+    def __init__(self, rank=4, num_classes=10, lora_target_modules=None):
+        super().__init__()
+        if lora_target_modules is None:
+            lora_target_modules = ['head'] # デフォルトはヘッドのみ
+            
+        logging.info("[Model] ViT-Base (ImageNet-1k) をロード中...")
+        self.vit = torchvision.models.vit_b_16(
+            weights=torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1
+        )
+        
+        # ViTの全パラメータをフリーズ
+        for param in self.vit.parameters():
+            param.requires_grad = False
+            
+        # ★ LoRAパッチを選択的に適用
+        self.vit = patch_vit_layers(self.vit, rank, lora_target_modules)
+
+    # ★ 修正: b_server の *辞書* を受け取り、動的にBを注入
+    def forward(self, x, b_server_states=None):
+        x = self.vit._process_input(x)
+        n = x.shape[0]
+        batch_class_token = self.vit.class_token.expand(n, -1, -1)
+        x = torch.cat([batch_class_token, x], dim=1)
+        x = x + self.vit.positional_embedding
+        
+        for i, layer in enumerate(self.vit.encoder.layers):
+            # (Attention ブロック - 変更なし、フリーズ状態)
+            x_norm1 = layer.ln_1(x)
+            x_attn, _ = layer.self_attention(x_norm1, x_norm1, x_norm1, need_weights=False)
+            x_attn = layer.dropout(x_attn)
+            x = x + x_attn
+            
+            # (MLP ブロック - LoRA化されているかチェック)
+            x_norm2 = layer.ln_2(x)
+            
+            # layer.mlp[0]
+            b_0 = b_server_states.get(f"encoder.layers.{i}.mlp.0") if b_server_states else None
+            if b_0 is not None and isinstance(layer.mlp[0], LoRALayer):
+                x_mlp = layer.mlp[0](x_norm2, b_server=b_0)
+            else:
+                x_mlp = layer.mlp[0](x_norm2) # 通常のLinearとして実行
+            
+            x_mlp = layer.mlp[1](x_mlp) # GELU
+            x_mlp = layer.mlp[2](x_mlp) # Dropout
+            
+            # layer.mlp[3]
+            b_3 = b_server_states.get(f"encoder.layers.{i}.mlp.3") if b_server_states else None
+            if b_3 is not None and isinstance(layer.mlp[3], LoRALayer):
+                x_mlp = layer.mlp[3](x_mlp, b_server=b_3)
+            else:
+                x_mlp = layer.mlp[3](x_mlp) # 通常のLinearとして実行
+                
+            x_mlp = layer.mlp[4](x_mlp) # Dropout
+            
+            x = x + x_mlp
+        
+        x = self.vit.encoder.ln(x)
+        x = x[:, 0]
+        
+        # ★ 修正: 分類ヘッド (LoRA化されているかチェック)
+        b_head = b_server_states.get("heads") if b_server_states else None
+        if b_head is not None and isinstance(self.vit.heads, LoRALayer):
+            x = self.vit.heads(x, b_server=b_head)
+        else:
+            x = self.vit.heads(x) # 通常のLinearとして実行
+        
+        return x
+
+    # ★ 修正: LoRALayer の A パラメータのみを収集
+    def get_lora_parameters(self):
+        params_list = []
+        for name, module in self.vit.named_modules():
+            if isinstance(module, LoRALayer):
+                params_list.append({"params": module.A})
+        return params_list
+        
+    def get_lora_state_dict(self):
+        state_dict = {}
+        for name, module in self.vit.named_modules():
+            if isinstance(module, LoRALayer):
+                clean_name = name.replace("vit.", "")
+                state_dict[clean_name] = module.A.data
+        return state_dict
+
+# --- 3. 共通: クライアント (Client) の実装 ---
+class Client:
+    def __init__(self, client_id, dataloader, local_model, device, client_lr):
+        self.client_id = client_id
+        self.dataloader = dataloader
+        self.model = local_model
+        self.optimizer = optim.SGD(self.model.get_lora_parameters(), lr=client_lr) # 全ての A を対象
+        self.criterion = nn.CrossEntropyLoss()
+        self.device = device
+
+    def local_train(self, local_epochs, b_server_states):
+        self.model.train()
+        total_loss, total_batches = 0.0, 0
+        
+        # B_server の全テンソルを取得 (requires_grad=True)
+        for b_tensor in b_server_states.values():
+            b_tensor.requires_grad = True
+
+        for epoch in range(local_epochs):
+            epoch_loss, epoch_batches = 0.0, 0
+            for data, target in self.dataloader:
+                data, target = data.to(self.device), target.to(self.device)
+                
+                self.optimizer.zero_grad()
+                for b_tensor in b_server_states.values():
+                    if b_tensor.grad is not None:
+                        b_tensor.grad.zero_()
+                
+                output = self.model(data, b_server_states=b_server_states) 
+                loss = self.criterion(output, target)
+                loss.backward()
+                self.optimizer.step()
+                
+                epoch_loss += loss.item()
+                epoch_batches += 1
+            total_loss += epoch_loss
+            total_batches += epoch_batches
+            
+        avg_loss = total_loss / total_batches if total_batches > 0 else 0
+        logging.info(f"  [Client {self.client_id}] Local Train (All A's): Avg Loss = {avg_loss:.4f}")
+
+        g_A_dict = {}
+        g_B_dict = {}
+        
+        for name, module in self.model.vit.named_modules():
+            if isinstance(module, LoRALayer):
+                clean_name = name.replace("vit.", "")
+                if module.A.grad is not None:
+                    g_A_dict[clean_name] = module.A.grad.clone().detach()
+        
+        for name, b_tensor in b_server_states.items():
+            if b_tensor.grad is not None:
+                g_B_dict[name] = b_tensor.grad.clone().detach()
+
+        return g_A_dict, g_B_dict
+
+# --- 4. [パート1] FedSGDサーバ (Server) ---
+class FedSGDServer:
+    def __init__(self, b_server_template, test_loader, device, server_lr):
+        self.B_server_states = nn.ParameterDict()
+        for name, shape in b_server_template.items():
+            b_tensor_gpu = (torch.randn(shape) / shape[1]).to(device) # (k, r) / r
+            self.B_server_states[name] = nn.Parameter(b_tensor_gpu)
+            
+        self.optimizer = optim.SGD(self.B_server_states.parameters(), lr=server_lr)
+        
+        self.all_A_states = {}
+        self.base_model_copy = None # 評価用にクライアントモデルのコピーを保持
+        self.test_loader = test_loader
+        self.v_cache, self.final_shapley_values = {}, {}
+        self.device = device
+        self.all_Gradients_A = {} 
+        self.all_Gradients_B = []
+        
+        logging.info(f"[Server] FedSGD (Multi-B) サーバを初期化しました (lr={server_lr})。")
+
+    def aggregate_and_update(self, compute_shapley_round, mc_iterations):
+        if not self.all_Gradients_B:
+            logging.warning("[Server] 更新するBの勾配がありません。")
+            return
+        g_B_global_dict = {}
+        for name in self.B_server_states.keys():
+            valid_grads_b_layer = []
+            for client_g_b_dict in self.all_Gradients_B:
+                if name in client_g_b_dict and client_g_b_dict[name] is not None:
+                    valid_grads_b_layer.append(client_g_b_dict[name])
+            
+            if valid_grads_b_layer:
+                g_B_global_dict[name] = torch.stack(valid_grads_b_layer).mean(dim=0)
+            else:
+                logging.warning(f"[Server] {name} の有効なB勾配がありません。")
+
+        self.optimizer.zero_grad()
+        for name, param in self.B_server_states.items():
+            if name in g_B_global_dict:
+                param.grad = g_B_global_dict[name]
+        self.optimizer.step()
+        
+        logging.info(f"         [Server] FedSGD Update: B_server (全 {len(g_B_global_dict)} レイヤー) を更新しました。")
+        
+        if compute_shapley_round:
+            logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
+            self.compute_shapley_tmc(self.all_A_states, self.B_server_states, mc_iterations=mc_iterations)
+            
+            logging.info("\n[Server] Gradient-based Proxy Validation を開始...")
+            self.run_gradient_proxy_validation()
+        
+        self.v_cache.clear()
+
+    def evaluate_coalition(self, coalition_client_ids, b_server_states):
+        coalition_tuple = tuple(sorted(coalition_client_ids))
+        if coalition_tuple in self.v_cache: return self.v_cache[coalition_tuple]
+        if not coalition_client_ids: return 0.0
+
+        A_S_dict = {}
+        all_a_keys = self.all_A_states[list(coalition_client_ids)[0]].keys()
+        for name in all_a_keys:
+            A_states_in_S_layer = [self.all_A_states[cid][name] for cid in coalition_client_ids]
+            A_S_dict[name] = torch.stack(A_states_in_S_layer).mean(dim=0)
+        
+        eval_model = copy.deepcopy(self.base_model_copy) # 保持しているコピーを使用
+        eval_model.eval()
+        
+        for name, module in eval_model.vit.named_modules():
+             if isinstance(module, LoRALayer):
+                clean_name = name.replace("vit.", "")
+                if clean_name in A_S_dict:
+                    module.A.data = A_S_dict[clean_name]
+
+        correct, total = 0, 0
+        with torch.no_grad():
+            for data, target in self.test_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output = eval_model(data, b_server_states=b_server_states)
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+                total += len(target)
+        
+        v_s_accuracy = 100. * correct / total if total > 0 else 0
+        logging.info(f"           [Shapley] V(S={list(coalition_tuple)}) = {v_s_accuracy:.4f}%")
+        return v_s_accuracy
+
+    def compute_shapley_tmc(self, all_A_states_dict, b_server_states, mc_iterations=20):
+        client_ids = list(all_A_states_dict.keys())
+        num_clients = len(client_ids)
+        if num_clients == 0: return
+        shapley_values = {cid: 0.0 for cid in client_ids}
+        
+        logging.info(f"           [Shapley] TMC-Shapley (T={mc_iterations}) 開始...")
+        for t in range(mc_iterations):
+            random.shuffle(client_ids)
+            coalition_ids = []
+            v_s_prev = self.evaluate_coalition([], b_server_states)
+            for client_id in client_ids:
+                coalition_ids.append(client_id)
+                v_s_curr = self.evaluate_coalition(coalition_ids, b_server_states)
+                marginal_contribution = v_s_curr - v_s_prev
+                shapley_values[client_id] += marginal_contribution
+                v_s_prev = v_s_curr
+        
+        logging.info("[Server] Shapley Values (TMC) 算出完了:")
+        for client_id in shapley_values:
+            shapley_values[client_id] /= mc_iterations
+            logging.info(f"         Client {client_id}: phi = {shapley_values[client_id]:.4f}")
+        self.final_shapley_values = shapley_values
+
+    def run_gradient_proxy_validation(self):
+        if not self.all_Gradients_A:
+            logging.error("[Proxy Validation] Error: 検証用の勾配(A)がありません。")
+            return
+        if not self.final_shapley_values:
+            logging.error("[Proxy Validation] Error: 比較対象のShapley値がありません。")
+            return
+            
+        g_A_global_dict = {}
+        all_a_keys = self.all_Gradients_A[list(self.all_Gradients_A.keys())[0]].keys()
+        
+        for name in all_a_keys:
+            all_g_A_i_layer = [g[name] for g in self.all_Gradients_A.values() if name in g and g[name] is not None]
+            if all_g_A_i_layer:
+                g_A_global_dict[name] = torch.stack(all_g_A_i_layer).mean(dim=0)
+            
+        proxy_scores_C_i = {}
+        logging.info("[Proxy Validation] 各クライアントの勾配貢献度 (C_i) を計算:")
+        
+        for client_id, g_A_dict in self.all_Gradients_A.items():
+            c_i_total = 0.0
+            for name, g_A_i in g_A_dict.items():
+                if name in g_A_global_dict and g_A_i is not None:
+                    c_i_total += torch.dot(g_A_i.flatten(), g_A_global_dict[name].flatten()).item()
+            proxy_scores_C_i[client_id] = c_i_total
+            logging.info(f"         Client {client_id}: C_i = {c_i_total:.4e}")
+        
+        phi_values, c_values, client_ids = [], [], []
+        sorted_client_ids = sorted(self.final_shapley_values.keys())
+        for cid in sorted_client_ids:
+            if cid in proxy_scores_C_i:
+                client_ids.append(cid)
+                phi_values.append(self.final_shapley_values[cid])
+                c_values.append(proxy_scores_C_i[cid])
+        
+        logging.info("\n" + "=" * 40)
+        logging.info("--- Gradient-based Proxy 検証結果 ---")
+        logging.info("=" * 40)
+        logging.info(f"{'Client ID':<10} | {'Phi (Shapley値)':<17} | {'C_i (Proxyスコア)':<17}")
+        logging.info("-" * 48)
+        for i in range(len(client_ids)):
+            logging.info(f"{client_ids[i]:<10} | {phi_values[i]:<17.4f} | {c_values[i]:<17.4e}")
+        logging.info("-" * 48)
+        
+        if len(phi_values) < 2 or np.std(phi_values) == 0 or np.std(c_values) == 0:
+            logging.warning("\n[結論] 相関を計算できません (データ不足または分散ゼロ)。")
+        else:
+            corr, p_val = spearmanr(phi_values, c_values)
+            logging.info("\n[相関分析結果]")
+            logging.info(f"スピアマン相関係数 (rho) : {corr:.4f} (p-value: {p_val:.4f})")
+            
+            if corr > 0.8:
+                logging.info("\n[結論] 強い正の相関 (rho > 0.8)。Shapley値は妥当である可能性が高いです。")
+            elif corr > 0.5:
+                 logging.info("\n[結論] 正の相関が見られますが、基準 (rho > 0.8) には達していません。")
+            else:
+                logging.info("\n[結論] 相関が低いか負であり、Shapley値の妥当性に疑問があります。")
+
+    def evaluate_global_model(self):
+        if not self.all_A_states: 
+            logging.warning("[Warning] 評価するA行列がありません。")
+            return 0.0
+
+        A_global_dict = {}
+        all_a_keys = self.all_A_states[list(self.all_A_states.keys())[0]].keys()
+        
+        for name in all_a_keys:
+            A_states_all_layer = [s[name] for s in self.all_A_states.values()]
+            A_global_dict[name] = torch.stack(A_states_all_layer).mean(dim=0)
+            
+        eval_model = copy.deepcopy(self.base_model_copy)
+        eval_model.eval()
+        
+        for name, module in eval_model.vit.named_modules():
+             if isinstance(module, LoRALayer):
+                clean_name = name.replace("vit.", "")
+                if clean_name in A_global_dict:
+                    module.A.data = A_global_dict[clean_name]
+
+        correct, total = 0, 0
+        with torch.no_grad():
+            for data, target in self.test_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output = eval_model(data, b_server_states=self.B_server_states)
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+                total += len(target)
+        v_s_accuracy = 100. * correct / total if total > 0 else 0
+        return v_s_accuracy
+
+    def clear_round_data(self):
+        self.all_A_states = {}
+        self.all_Gradients_A = {}
+        self.all_Gradients_B = []
+
+# --- 5. [パート1] メイン学習 実行関数 ---
+def run_main_training(config, all_datasets):
+    logging.info(f"--- [パート1] FedSGD (Multi-B ViT) 版 ---")
+    logging.info(f"Clients: {config['num_clients']}, Rounds: {config['num_rounds']}, Rank: {config['rank']}")
+    logging.info("-" * 30)
+
+    device = all_datasets['device']
+    client_dataloaders = all_datasets['client_dataloaders']
+    test_loader = all_datasets['test_loader']
+    
+    lora_target_modules = config.get('lora_target_modules', ['head'])
+    
+    base_model = ViT_LoRA_Multi(
+        rank=config['rank'], 
+        num_classes=10, 
+        lora_target_modules=lora_target_modules
+    ).to(device)
+    
+    b_server_template = {}
+    for name, module in base_model.vit.named_modules():
+        if isinstance(module, LoRALayer):
+            clean_name = name.replace("vit.", "")
+            k = module.original_layer.out_features
+            r = module.rank
+            b_server_template[clean_name] = (k, r)
+            
+    logging.info(f"[Main] サーバが管理するB行列 (計 {len(b_server_template)} 個): {list(b_server_template.keys())}")
+
+    server = FedSGDServer(
+        b_server_template, 
+        test_loader=test_loader, 
+        device=device,
+        server_lr=config.get('server_lr', 0.01)
+    )
+
+    clients = []
+    actual_num_clients = len(client_dataloaders)
+    client_lr = config.get('client_lr', 0.01)
+    logging.info(f"[Main] Client LR: {client_lr}")
+    
+    for i in range(actual_num_clients):
+        local_model = copy.deepcopy(base_model)
+        for param_group in local_model.get_lora_parameters():
+            param_group['params'].requires_grad = True
+        clients.append(Client(i, client_dataloaders[i], local_model, device=device, client_lr=client_lr))
+    
+    logging.info(f"[Main] {len(clients)} クライアントの初期化完了。")
+    logging.info("-" * 30)
+
+    start_time = time.time()
+    eval_interval = config.get('eval_interval', 5)
+    logging.info(f"[Main] グローバルテスト精度を {eval_interval} ラウンドごとに計算します。")
+    
+    for t in range(config['num_rounds']):
+        logging.info(f"\n--- Round {t+1}/{config['num_rounds']} ---")
+        server.clear_round_data()
+        
+        current_b_server_state = server.B_server_states
+
+        for i in range(actual_num_clients):
+            client = clients[i]
+            
+            g_A_dict, g_B_dict = client.local_train(
+                local_epochs=config['local_epochs'],
+                b_server_states=current_b_server_state
+            )
+            
+            A_i_state_dict = client.model.get_lora_state_dict()
+            server.all_A_states[i] = A_i_state_dict
+            server.all_Gradients_A[i] = g_A_dict
+            server.all_Gradients_B.append(g_B_dict)
+
+        compute_shapley_round = (t + 1) == config['num_rounds']
+        
+        server.aggregate_and_update(
+            compute_shapley_round,
+            mc_iterations=config.get('shapley_tmc_iterations', 20)
+        )
+
+        if (t + 1) % eval_interval == 0 or (t + 1) == config['num_rounds']:
+            logging.info(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
+            server.base_model_copy = copy.deepcopy(clients[0].model) 
+            current_test_accuracy = server.evaluate_global_model()
+            logging.info(f"====== [Main] Round {t+1} Global Test Accuracy: {current_test_accuracy:.4f}% ======")
+
+    total_time = time.time() - start_time
+    logging.info("-" * 30)
+    logging.info(f"--- [パート1] 学習完了 --- (総所要時間: {total_time:.2f} 秒)")
+    
+    return server.final_shapley_values
+
+# --- 9. 統合メイン実行ブロック ---
+if __name__ == "__main__":
+    
+    setup_logging(logfile='experiment_fedsgd_vit_multi.log') 
+    
+    config_file = "config.yml"
+    try:
+        with open(config_file, 'r') as f:
+            config = yaml.safe_load(f)
+        logging.info(f"[Main] {config_file} から設定をロードしました。")
+        logging.info(f"Loaded config:\n{json.dumps(config, indent=2)}")
+    except FileNotFoundError:
+        logging.error(f"[Error] {config_file} が見つかりません。")
+        exit()
+    except Exception as e:
+        logging.error(f"[Error] {config_file} の読み込みに失敗しました: {e}")
+        exit()
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logging.info(f"\n[Main] Using device: {device}")
+    
+    logging.info("\n[Main] 共通データセットを準備します...")
+    
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)), 
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+    
+    try:
+        train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+        test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+    except Exception as e:
+        logging.error(f"[Error] CIFAR-10データセットのダウンロードに失敗しました: {e}")
+        exit()
+        
+    client_dataloaders = get_non_iid_data(config['num_clients'], train_dataset, alpha=config['non_iid_alpha'])
+    test_loader = DataLoader(test_dataset, batch_size=64, num_workers=2, pin_memory=True) 
+    
+    if len(client_dataloaders) != config['num_clients']:
+        logging.warning(f"[Main] Warning: データ割り当ての結果、クライアント数が {len(client_dataloaders)} になりました。")
+        config['num_clients'] = len(client_dataloaders)
+
+    all_datasets = {
+        'client_dataloaders': client_dataloaders,
+        'test_loader': test_loader,
+        'device': device
+    }
+
+    final_shapley_values = run_main_training(config, all_datasets)
+    
+    logging.info("\n[Main] すべての処理が完了しました。")
