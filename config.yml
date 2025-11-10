@@ -9,10 +9,11 @@
 # --- 1. Global Experiment Settings ---
 experiment_name: "01" 
 num_clients: 5
-num_rounds: 20
+num_rounds: 50
 local_epochs: 2
-non_iid_alpha: 0.3
+non_iid_alpha: 0.1
 eval_interval: 1
+seed: 42
 
 # --- 2. Model & LoRA Settings ---
 rank: 4

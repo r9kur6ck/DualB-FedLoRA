@@ -263,14 +263,44 @@ class FixedBServer:
                     )
         client_acc_dict = {}
         shapley_snapshot = {}
-        # if compute_shapley_round:
-        #     logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
-        #     self.compute_shapley_tmc(self.all_client_states, self.B_server_state, mc_iterations=mc_iterations)
-        #     logging.info("\n[Server] (検証1) Gradient-based Proxy Validation を開始...")
-        #     self.run_gradient_proxy_validation()
-        #     logging.info("\n[Server] (検証2) Local Accuracy vs Shapley Validation を開始...")
-        #     client_acc_dict = self.run_local_accuracy_validation()
-        #     shapley_snapshot = {cid: float(val) for cid, val in self.final_shapley_values.items()}
+        if compute_shapley_round:
+            logging.info("\n[Server] Shapley値 (TMC) の計算を開始...")
+            self.compute_shapley_tmc(self.all_client_states, self.B_server_state, mc_iterations=mc_iterations)
+            phi_values = self.final_shapley_values
+            shapley_snapshot = {cid: float(val) for cid, val in phi_values.items()}
+            if phi_values:
+                client_ids = list(self.all_client_states.keys())
+                raw_weights = torch.tensor(
+                    [phi_values.get(cid, 0.0) for cid in client_ids],
+                    device=self.device
+                )
+                clipped_weights = torch.clamp(raw_weights, min=0.0)
+                if torch.sum(clipped_weights) > 0:
+                    max_w = torch.max(clipped_weights)
+                    min_w = torch.min(clipped_weights)
+                    if max_w > min_w:
+                        norm_weights = (clipped_weights - min_w) / (max_w - min_w)
+                    else:
+                        norm_weights = torch.ones_like(clipped_weights)
+                    weight_sum = torch.sum(norm_weights)
+                    if weight_sum > 0:
+                        weights = norm_weights / weight_sum
+                        weight_log = {cid: float(w.item()) for cid, w in zip(client_ids, weights)}
+                        logging.info(f"[Server] Normalized Shapley weights: {weight_log}")
+                        A_list = [self.all_client_states[cid]['A_fc1'] for cid in client_ids]
+                        A_global = sum(w * A_i for w, A_i in zip(weights, A_list))
+                        self.base_model.lora_fc1.A.data = A_global.clone()
+                        logging.info("[Server] Shapley-weighted aggregation applied to A (normalized).")
+                    else:
+                        logging.warning("[Server] Normalized Shapley weights sum to zero. Skipping weighted aggregation.")
+                else:
+                    logging.warning("[Server] All Shapley weights are zero after clipping. Skipping weighted aggregation.")
+            else:
+                logging.warning("[Server] Shapley values unavailable. Skipping weighted aggregation.")
+            # logging.info("\n[Server] (検証1) Gradient-based Proxy Validation を開始...")
+            # self.run_gradient_proxy_validation()
+            # logging.info("\n[Server] (検証2) Local Accuracy vs Shapley Validation を開始...")
+            # client_acc_dict = self.run_local_accuracy_validation()
         self.v_cache.clear()
         self.record_round_metrics(round_idx, client_acc_dict, shapley_snapshot)
 
@@ -311,7 +341,7 @@ class FixedBServer:
                 loss_sum += loss.item() * batch_size
                 total += batch_size
         avg_loss = loss_sum / total if total > 0 else 0.0
-        v_s_value = avg_loss
+        v_s_value = - avg_loss
         logging.info(f"           [Shapley] V(S={list(coalition_tuple)}) = {v_s_value:.4f} (=-loss)")
         self.v_cache[coalition_tuple] = v_s_value
         return v_s_value
@@ -537,8 +567,8 @@ def run_main_training(config, all_datasets):
             server.all_client_states[i] = A_i_state
             server.all_Gradients[i] = g_A_i 
 
-        compute_shapley_round = (t + 1) == config.get('num_rounds', 20)
-        
+        compute_shapley_round = True  # Shapley値は毎ラウンド計算
+
         server.aggregate_and_update(
             compute_shapley_round,
             mc_iterations=config.get('shapley_tmc_iterations', 50),
@@ -546,17 +576,17 @@ def run_main_training(config, all_datasets):
         )
 
         # if compute_shapley_round:
-            # proxy_scores = getattr(server, 'last_proxy_scores', {})
-            # shared_ids = sorted(set(server.final_shapley_values.keys()) & set(proxy_scores.keys()))
-            # if len(shared_ids) >= 2:
-            #     phi_vals = [server.final_shapley_values[cid] for cid in shared_ids]
-            #     proxy_vals = [proxy_scores[cid] for cid in shared_ids]
-            #     rho, _ = spearmanr(phi_vals, proxy_vals)
-            #     ### 修正
-            #     # Roundごとの相関追跡ログ
-            #     logging.info(f"[Round {t+1}] Spearman correlation (Phi vs Proxy): {rho:.4f}")
-            # else:
-            #     logging.info(f"[Round {t+1}] Spearman correlation (Phi vs Proxy): データ不足のため計算不可")
+        #     proxy_scores = getattr(server, 'last_proxy_scores', {})
+        #     shared_ids = sorted(set(server.final_shapley_values.keys()) & set(proxy_scores.keys()))
+        #     if len(shared_ids) >= 2:
+        #         phi_vals = [server.final_shapley_values[cid] for cid in shared_ids]
+        #         proxy_vals = [proxy_scores[cid] for cid in shared_ids]
+        #         rho, _ = spearmanr(phi_vals, proxy_vals)
+        #         ### 修正
+        #         # Roundごとの相関追跡ログ
+        #         logging.info(f"[Round {t+1}] Spearman correlation (Phi vs Proxy): {rho:.4f}")
+        #     else:
+        #         logging.info(f"[Round {t+1}] Spearman correlation (Phi vs Proxy): データ不足のため計算不可")
 
         if (t + 1) % eval_interval == 0 or (t + 1) == config.get('num_rounds', 20):
             logging.info(f"\n[Main] Round {t+1}: グローバルテスト精度を計算中...")
@@ -575,9 +605,9 @@ def run_main_training(config, all_datasets):
     save_metrics_outputs(
         config,
         metrics_payload,
-        json_filename=f"{config.get('experiment_name', 'experiment')}_resnet_fixed_metrics.json",
-        csv_folder_name='resnet_fixed_csv',
-        log_prefix='Baseline metrics'
+        json_filename=f"{config.get('experiment_name', 'experiment')}_resnet_fixed_shapley_metrics.json",
+        csv_folder_name='resnet_fixed_shapley_csv',
+        log_prefix='Shapley metrics'
     )
 
     return server.final_shapley_values
